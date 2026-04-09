@@ -26,10 +26,10 @@ const TalentSearch = () => {
         <div style={{
             width: '100%',
             padding: '24px 28px',
-            background: 'white',
+            background: 'rgba(226, 239, 255, 0.95)',
             borderRadius: '12px',
-            border: '1px solid #E5E7EB',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+            border: '1px solid rgba(147, 197, 253, 0.6)',
+            boxShadow: '0 12px 30px rgba(59, 130, 246, 0.08)',
             fontFamily: '"Inter", sans-serif',
             boxSizing: 'border-box',
         }}>

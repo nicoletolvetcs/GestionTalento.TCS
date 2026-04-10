@@ -1,6 +1,6 @@
 import Navbar from './components/Navbar'
-import TalentSearch from './components/TalentSearch'
-import TalentTable from './components/TalentTable'
+
+import TalentManagement from './components/TalentManagment'
 
 function App() {
   return (
@@ -8,10 +8,7 @@ function App() {
       <Navbar userName="Nicole Tolve" userRole="Administrador" />
 
       <main style={{ padding: '15px 40px 40px 40px' }}>
-        <TalentSearch />
-        <TalentTable />
-
-        {/* Aquí podrías poner luego la lista de resultados */}
+        <TalentManagement />
       </main>
     </div>
   )

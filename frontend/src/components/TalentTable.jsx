@@ -1,14 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { IoEyeOutline } from "react-icons/io5";
 import { FiClipboard, FiFileText } from "react-icons/fi";
 
-// Datos de ejemplo para que la tabla siempre tenga contenido
-const mockData = [
-  { id: 1, nombre: "Carlos Pérez", area: "Tecnología", especialidades: ["Frontend", "React"], aspiracion: "$3,500 USD", estatus: "Elegible" },
-  { id: 2, nombre: "Ana López", area: "Marketing", especialidades: ["SEO", "Content"], aspiracion: "$2,800 USD", estatus: "En Cartera" },
-  { id: 3, nombre: "Luis García", area: "Tecnología", especialidades: ["Backend", "DevOps"], aspiracion: "$4,200 USD", estatus: "Pendiente" },
-  { id: 4, nombre: "María Rodríguez", area: "Diseño", especialidades: ["UI/UX"], aspiracion: "$3,000 USD", estatus: "No Elegible" },
-];
 
 // 1. Componente para el Estatus (Badge)
 const StatusBadge = ({ status }) => {
@@ -47,40 +40,62 @@ const ActionButtons = () => (
   </div>
 );
 
-// 3. Fila de la Tabla
-const TalentRow = ({ talent }) => (
-  <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
-    <td style={{ padding: '16px 24px', fontSize: '14px', fontWeight: 500, color: '#1F2937' }}>{talent.nombre}</td>
-    <td style={{ padding: '16px 24px', fontSize: '14px', color: '#6B7280' }}>{talent.area}</td>
-    <td style={{ padding: '16px 24px' }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-        {talent.especialidades.map(esp => (
-          <span key={esp} style={{
-            padding: '2px 8px',
-            backgroundColor: '#F3F4F6',
-            color: '#6B7280',
-            borderRadius: '4px',
-            fontSize: '11px',
-            textTransform: 'uppercase',
-            fontWeight: 600,
-          }}>
-            {esp}
-          </span>
-        ))}
-      </div>
-    </td>
-    <td style={{ padding: '16px 24px', fontSize: '14px', color: '#1F2937' }}>{talent.aspiracion}</td>
-    <td style={{ padding: '16px 24px' }}>
-      <StatusBadge status={talent.estatus} />
-    </td>
-    <td style={{ padding: '16px 24px' }}>
-      <ActionButtons />
-    </td>
-  </tr>
-);
+// 3. Fila de la Tabla (con efecto hover)
+const TalentRow = ({ talent }) => {
+  const [isHovered, setIsHovered] = useState(false);
 
+  return (
+    <tr
+      style={{
+        borderBottom: '1px solid #F3F4F6',
+        backgroundColor: isHovered ? '#F9FAFB' : 'transparent',
+        transition: 'background-color 0.2s ease',
+        cursor: 'pointer',
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <td style={{ padding: '16px 24px', fontSize: '14px', fontWeight: 500, color: '#1F2937' }}>
+        {talent.nombre_completo}
+      </td>
+
+      <td style={{ padding: '16px 24px', fontSize: '14px', color: '#6B7280' }}>
+        {talent.area_nombre}
+      </td>
+
+      <td style={{ padding: '16px 24px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+          {talent.especialidades_detalle?.map(esp => (
+            <span key={esp.id_especialidad} style={{
+              padding: '2px 8px',
+              backgroundColor: '#F3F4F6',
+              color: '#6B7280',
+              borderRadius: '4px',
+              fontSize: '11px',
+              textTransform: 'uppercase',
+              fontWeight: 600,
+            }}>
+              {esp.nombre}
+            </span>
+          ))}
+        </div>
+      </td>
+
+      <td style={{ padding: '16px 24px', fontSize: '14px', color: '#1F2937' }}>
+        ${talent.aspiracion_salarial}
+      </td>
+
+      <td style={{ padding: '16px 24px' }}>
+        <StatusBadge status={talent.estatus} />
+      </td>
+      <td style={{ padding: '16px 24px' }}>
+        <ActionButtons />
+      </td>
+    </tr>
+  );
+};
 // 4. Contenedor Principal
-const TalentTable = ({ data = mockData }) => {
+const TalentTable = ({ data = [] }) => {
   return (
     <div style={{
       width: '100%',
@@ -118,9 +133,26 @@ const TalentTable = ({ data = mockData }) => {
             </tr>
           </thead>
           <tbody>
-            {data.map(talent => (
-              <TalentRow key={talent.id} talent={talent} />
-            ))}
+            {data.length > 0 ? (
+              data.map(talent => (
+                <TalentRow key={talent.id_candidato} talent={talent} />
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan={6}
+                  style={{
+                    padding: '48px 24px',
+                    textAlign: 'center',
+                    fontSize: '14px',
+                    color: '#9CA3AF',
+                    fontStyle: 'italic',
+                  }}
+                >
+                  No se encontraron registros para esta búsqueda.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

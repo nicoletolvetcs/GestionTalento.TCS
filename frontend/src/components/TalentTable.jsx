@@ -82,7 +82,7 @@ const TalentRow = ({ talent }) => {
       </td>
 
       <td style={{ padding: '16px 24px', fontSize: '14px', color: '#1F2937' }}>
-        ${talent.aspiracion_salarial}
+        {talent.aspiracion_salarial} {talent.moneda}
       </td>
 
       <td style={{ padding: '16px 24px' }}>

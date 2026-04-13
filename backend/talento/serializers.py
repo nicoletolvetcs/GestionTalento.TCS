@@ -31,7 +31,7 @@ class CandidatoSerializer(serializers.ModelSerializer):
                 'fecha_nacimiento', 'nombre_completo',
                  'email', 'telefono', 'ciudad', 'pais', 
                  'disponibilidad', 'direccion', 
-                 'aspiracion_salarial', 'url_documento_id', 
+                 'aspiracion_salarial', 'moneda', 'url_documento_id', 
                  'url_referencias', 'created_at', 
                  'especialidades_detalle','area_nombre', 'especialidades', 'estatus']
 

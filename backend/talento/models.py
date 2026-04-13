@@ -44,6 +44,10 @@ class Candidato(models.Model):
         PRESENCIAL = 'Presencial', 'Presencial'
         HIBRIDO = 'Híbrido', 'Híbrido'
 
+    class MonedaChoices(models.TextChoices):
+        USD = 'USD', 'USD'
+        EUR = 'EUR', 'EUR'
+
     id_candidato = models.AutoField(primary_key=True, db_column='id_candidato')
     cedula = models.CharField(max_length=100, unique=True, db_column='numero_identificacion')
     fecha_nacimiento = models.DateField(null=True, blank=True)
@@ -57,6 +61,12 @@ class Candidato(models.Model):
     aspiracion_salarial = models.DecimalField(max_digits=12, decimal_places=2)
     url_documento_id = models.TextField(null=True, blank=True)
     url_referencias = models.TextField(null=True, blank=True)
+    moneda = models.CharField(
+        max_length=3,
+        choices=MonedaChoices.choices,
+        default=MonedaChoices.USD,
+        db_column='moneda'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
 

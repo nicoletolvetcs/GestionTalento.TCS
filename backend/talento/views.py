@@ -20,6 +20,8 @@ class CandidatoViewSet(viewsets.ModelViewSet):
         area = self.request.query_params.get('area')
         especialidad = self.request.query_params.get('especialidad')
         nombre = self.request.query_params.get('nombre')
+        salario = self.request.query_params.get('salario')
+        moneda = self.request.query_params.get('moneda')
 
         if area:
             queryset = queryset.filter(especialidades__area_id=area).distinct()
@@ -27,6 +29,15 @@ class CandidatoViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(especialidades__id_especialidad=especialidad)
         if nombre:
             queryset = queryset.filter(nombre_completo__icontains=nombre)
+        if salario:
+            # Si hay salario, filtramos asumiendo la moneda que viene del selector
+            if moneda:
+                queryset = queryset.filter(aspiracion_salarial__lte=salario, moneda=moneda)
+            else:
+                queryset = queryset.filter(aspiracion_salarial__lte=salario)
+        elif moneda:
+            # Si no hay salario pero por alguna razón cambian la moneda
+            queryset = queryset.filter(moneda=moneda)
             
         return queryset
 

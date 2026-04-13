@@ -15,7 +15,8 @@ const TalentManagement = () => {
                 params: {
                     area: filtros.area || '',
                     especialidad: filtros.especialidad || '',
-                    // Aquí podrías añadir salario si lo implementas en el backend
+                    salario: filtros.salario || '',
+                    moneda: filtros.moneda || ''
                 }
             });
             setCandidatos(response.data);

@@ -1,10 +1,16 @@
-import { useState } from 'react'
-import Navbar from './components/Navbar'
-import RegisterTalent from './components/RegisterTalent'
-import TalentManagement from './components/TalentManagment'
+import { useState } from "react";
+import Navbar from "./components/Navbar";
+import RegisterTalent from "./components/RegisterTalent";
+import TalentManagement from "./components/TalentManagment";
+import { InterviewForm } from "./components/InterviewForm";
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('search')
+  const [currentPage, setCurrentPage] = useState("search");
+
+  const talentosMock = [
+    { id: 1, nombre: "Carlos", apellido: "Pérez", area: "Sistemas" },
+    { id: 2, nombre: "Ana", apellido: "Gómez", area: "Ventas" },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -15,15 +21,21 @@ function App() {
         onNavChange={setCurrentPage}
       />
 
-      <main style={{ padding: '0px 0px 0px' }}>
-        {currentPage === 'search' && <TalentManagement />}
-        {currentPage === 'register' && <RegisterTalent onBack={() => setCurrentPage('search')} />}
-        {currentPage === 'interviews' && (
-          <div className="p-8 mt-10 text-center text-gray-500 text-lg">Componente de Entrevistas en Construcción...</div>
+      <main style={{ padding: "0px 0px 0px" }}>
+        {currentPage === "search" && <TalentManagement />}
+        {currentPage === "register" && (
+          <RegisterTalent onBack={() => setCurrentPage("search")} />
+        )}
+        {currentPage === "interviews" && (
+          <InterviewForm
+            talents={talentosMock}
+            onBack={() => setCurrentPage("search")}
+            onSave={(datos) => console.log("Datos a guardar:", datos)}
+          />
         )}
       </main>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

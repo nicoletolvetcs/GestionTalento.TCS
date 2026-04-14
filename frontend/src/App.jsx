@@ -388,7 +388,6 @@ ${talent.estatus === "Elegible" ? "Candidato altamente recomendado para proceso 
           </div>
         )}
       </main>
-
     </div>
   );
 }

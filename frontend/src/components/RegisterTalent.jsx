@@ -1,443 +1,120 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import { FaArrowLeft } from "react-icons/fa";
 
-/**
- * NOTA PARA EL USUARIO:
- * Para que este componente se vea correctamente, debes asegurarte de que tu archivo
- * 'src/index.css' contenga las siguientes líneas al principio:
- * * @tailwind base;
- * @tailwind components;
- * @tailwind utilities;
- * * Tu configuración de 'tailwind.config.js' y 'main.jsx' que compartiste es correcta.
- */
 
-export default function RegisterTalent({ onRegister, onBack }) {
-  const [formData, setFormData] = useState({
-    nombreCompleto: "",
-    identificacion: "",
-    fechaNacimiento: "",
-    telefono: "",
-    correoElectronico: "",
-    ciudad: "",
-    pais: "",
-    areaTrabajo: "",
-    especialidad: "",
-    disponibilidad: "Inmediata",
-    expectativaSalarial: "",
-    moneda: "EUR",
-    documentoIdentidad: null,
-    referenciasPersonales: null,
-    aceptaPoliticas: false,
-  });
+const FormInput = ({ label, placeholder, type = "text", value, onChange, width = "100%" }) => (
+  <div style={{ width, marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <label style={{ color: '#1F2937', fontSize: '14px', fontWeight: '500', fontFamily: 'Inter' }}>
+      {label}
+    </label>
+    <input
+      type={type}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      style={{
+        height: '42px',
+        padding: '0 16px',
+        borderRadius: '8px',
+        border: '1px solid #E5E7EB',
+        fontSize: '16px',
+        fontFamily: 'Inter',
+        outline: 'none'
+      }}
+    />
+  </div>
+);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState("");
+const FormSection = ({ title, children }) => (
+  <div style={{ alignSelf: 'stretch', display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
+    <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '8px' }}>
+      <h3 style={{ color: '#1F2937', fontSize: '18px', fontWeight: '600', fontFamily: 'Inter', margin: 0 }}>
+        {title}
+      </h3>
+    </div>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+      {children}
+    </div>
+  </div>
+);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
+const FileDropzone = ({ label, helperText }) => (
+  <div style={{ flex: '1', minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <span style={{ color: '#1F2937', fontSize: '14px', fontWeight: '500' }}>{label}</span>
+    <div style={{
+      height: '132px',
+      borderRadius: '8px',
+      border: '2px dashed #E5E7EB',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      cursor: 'pointer',
+      backgroundColor: '#FAFBFC'
+    }}>
+      <div style={{ color: '#6B7280', fontSize: '14px' }}>Arrastra el archivo aquí</div>
+      <div style={{ color: '#9CA3AF', fontSize: '12px' }}>{helperText}</div>
+    </div>
+  </div>
+);
 
-  const handleFileChange = (e) => {
-    const { name, files } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: files[0] || null,
-    }));
-  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setMessage("");
-
-    // Simulación de espera para el backend
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    // Estructura para enviar al backend (FormData es necesario por los archivos)
-    const dataToSend = new FormData();
-    Object.keys(formData).forEach((key) => {
-      dataToSend.append(key, formData[key]);
-    });
-
-    if (typeof onRegister === "function") {
-      onRegister(formData);
-    }
-
-    setMessage("Candidato registrado exitosamente.");
-    setIsSubmitting(false);
-  };
-
+const RegisterTalent = ({ onBack }) => {
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4 font-sans text-gray-800">
-      <div className="max-w-4xl mx-auto">
-        {/* Botón de volver */}
-        <button
-          onClick={onBack}
-          className="flex items-center text-blue-600 hover:text-blue-800 font-medium text-sm mb-6 transition-colors"
-        >
-          <svg
-            className="w-4 h-4 mr-1"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+    <div style={{ backgroundColor: 'rgb(243, 244, 246)', width: '100%', minHeight: 'calc(100vh - 68px)', boxSizing: 'border-box' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '36px 24px', fontSize: '16px', fontFamily: '"Inter", sans-serif', fontWeight: 600 }}>
+        {/* Botón Volver */}
+        {onBack && (
+          <button
+            onClick={onBack}
+            style={{ color: '#1A73E8', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', fontSize: '16px', fontFamily: '"Inter", sans-serif', fontWeight: 600 }}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
-          Volver a Búsqueda
-        </button>
+            <FaArrowLeft />
+            Volver a Búsqueda
+          </button>
+        )}
 
-        {/* Contenedor principal del formulario */}
-        <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-800 mb-8">
-            Registro de Nuevo Candidato
-          </h2>
+        <div style={{ background: 'white', padding: '32px', paddingTop: '24px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', border: '1px solid #E5E7EB' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '32px', fontFamily: 'Inter' }}>Registro de Nuevo Candidato</h2>
 
-          {message && (
-            <div className="mb-6 p-4 rounded-md text-sm font-medium bg-green-50 text-green-800 border border-green-200">
-              {message}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* SECCIÓN I. Datos Personales */}
-            <section>
-              <h3 className="text-base font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">
-                I. Datos Personales
-              </h3>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nombre Completo *
-                  </label>
-                  <input
-                    type="text"
-                    name="nombreCompleto"
-                    value={formData.nombreCompleto}
-                    onChange={handleChange}
-                    required
-                    placeholder="Nombres y Apellidos"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Identificación *
-                    </label>
-                    <input
-                      type="text"
-                      name="identificacion"
-                      value={formData.identificacion}
-                      onChange={handleChange}
-                      required
-                      placeholder="DNI 12345678A"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Fecha de Nacimiento *
-                    </label>
-                    <input
-                      type="date"
-                      name="fechaNacimiento"
-                      value={formData.fechaNacimiento}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Teléfono *
-                    </label>
-                    <input
-                      type="tel"
-                      name="telefono"
-                      value={formData.telefono}
-                      onChange={handleChange}
-                      required
-                      placeholder="+34 612 345 678"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Correo Electrónico *
-                    </label>
-                    <input
-                      type="email"
-                      name="correoElectronico"
-                      value={formData.correoElectronico}
-                      onChange={handleChange}
-                      required
-                      placeholder="correo@ejemplo.com"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Ciudad *
-                    </label>
-                    <input
-                      type="text"
-                      name="ciudad"
-                      value={formData.ciudad}
-                      onChange={handleChange}
-                      required
-                      placeholder="Madrid"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      País *
-                    </label>
-                    <input
-                      type="text"
-                      name="pais"
-                      value={formData.pais}
-                      onChange={handleChange}
-                      required
-                      placeholder="España"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    />
-                  </div>
-                </div>
+          <form>
+            <FormSection title="I. Datos Personales">
+              <FormInput label="Nombre Completo *" placeholder="Nombres y Apellidos" />
+              <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
+                <FormInput label="Identificación *" placeholder="V-12345678" width="50%" />
+                <FormInput label="Fecha de Nacimiento *" type="date" width="50%" />
               </div>
-            </section>
-
-            {/* SECCIÓN II. Perfil Profesional */}
-            <section>
-              <h3 className="text-base font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">
-                II. Perfil Profesional
-              </h3>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Área de Trabajo *
-                  </label>
-                  <select
-                    name="areaTrabajo"
-                    value={formData.areaTrabajo}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
-                  >
-                    <option value="" disabled>
-                      Seleccione un área
-                    </option>
-                    <option value="tecnologia">
-                      Tecnología de la Información
-                    </option>
-                    <option value="marketing">Marketing y Publicidad</option>
-                    <option value="finanzas">Finanzas y Contabilidad</option>
-                    <option value="rrhh">Recursos Humanos</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Especialidades *
-                  </label>
-                  <input
-                    type="text"
-                    name="especialidad"
-                    value={formData.especialidad}
-                    onChange={handleChange}
-                    required
-                    disabled={!formData.areaTrabajo}
-                    placeholder={
-                      formData.areaTrabajo
-                        ? "Ingrese sus especialidades"
-                        : "Primero seleccione un Área de trabajo"
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:text-gray-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Disponibilidad
-                  </label>
-                  <select
-                    name="disponibilidad"
-                    value={formData.disponibilidad}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
-                  >
-                    <option value="Inmediata">Inmediata</option>
-                    <option value="15_dias">15 días</option>
-                    <option value="1_mes">1 mes</option>
-                    <option value="negociable">Negociable</option>
-                  </select>
-                </div>
+              <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
+                <FormInput label="Teléfono *" placeholder="+58 412..." width="50%" />
+                <FormInput label="Correo Electrónico *" type="email" placeholder="correo@ejemplo.com" width="50%" />
               </div>
-            </section>
+              <FormInput label="Dirección *" placeholder="Direccion completa" />
+            </FormSection>
 
-            {/* SECCIÓN III. Documentación y Aspiración Salarial */}
-            <section>
-              <h3 className="text-base font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">
-                III. Documentación y Aspiración Salarial
-              </h3>
-
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Expectativa Salarial *
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      name="expectativaSalarial"
-                      value={formData.expectativaSalarial}
-                      onChange={handleChange}
-                      required
-                      placeholder="35000"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    />
-                    <select
-                      name="moneda"
-                      value={formData.moneda}
-                      onChange={handleChange}
-                      className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
-                    >
-                      <option value="EUR">EUR</option>
-                      <option value="USD">USD</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Carga Documento Identidad */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Documento de Identidad
-                    </label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors relative">
-                      <input
-                        type="file"
-                        name="documentoIdentidad"
-                        onChange={handleFileChange}
-                        accept=".pdf,.jpg,.jpeg"
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      <svg
-                        className="w-8 h-8 text-gray-400 mb-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                        />
-                      </svg>
-                      <p className="text-sm text-gray-600 font-medium">
-                        {formData.documentoIdentidad
-                          ? formData.documentoIdentidad.name
-                          : "Arrastra el archivo aquí"}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        PDF o JPG (máx. 5MB)
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Carga Referencias Personales */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Referencias Personales
-                    </label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors relative">
-                      <input
-                        type="file"
-                        name="referenciasPersonales"
-                        onChange={handleFileChange}
-                        accept=".pdf,.jpg,.jpeg"
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      <svg
-                        className="w-8 h-8 text-gray-400 mb-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                        />
-                      </svg>
-                      <p className="text-sm text-gray-600 font-medium">
-                        {formData.referenciasPersonales
-                          ? formData.referenciasPersonales.name
-                          : "Arrastra el archivo aquí"}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        PDF o JPG (máx. 5MB)
-                      </p>
-                    </div>
-                  </div>
-                </div>
+            <FormSection title="II. Perfil Profesional">
+              <div style={{ width: '100%' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>Área de Trabajo *</label>
+                <select style={{ width: '100%', height: '42px', borderRadius: '8px', border: '1px solid #E5E7EB', outline: 'none' }}>
+                  <option>Seleccione un área...</option>
+                </select>
               </div>
-            </section>
+            </FormSection>
 
-            {/* Checkbox de Políticas */}
-            <div className="pt-4 border-t border-gray-200">
-              <label className="flex items-start gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="aceptaPoliticas"
-                  checked={formData.aceptaPoliticas}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">
-                  Acepto las políticas de privacidad y manejo de datos sensibles
-                  (LOPD) *
-                </span>
-              </label>
-            </div>
+            <FormSection title="III. Documentación y Aspiración">
+              <FormInput label="Expectativa Salarial *" type="number" placeholder="Ej: 35000" />
+              <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
+                <FileDropzone label="Documento de Identidad" helperText="PDF o JPG (máx. 5MB)" />
+                <FileDropzone label="Referencias Personales" helperText="PDF o JPG (máx. 5MB)" />
+              </div>
+            </FormSection>
 
             {/* Botones de Acción */}
-            <div className="flex justify-end gap-3 pt-6">
-              <button
-                type="button"
-                className="px-6 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                onClick={() => {
-                  /* Lógica para cancelar o resetear */
-                }}
-              >
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px', marginTop: '40px', paddingTop: '24px', borderTop: '1px solid #E5E7EB' }}>
+              <button type="button" onClick={onBack} style={{ padding: '12px 24px', borderRadius: '8px', border: '1px solid #E5E7EB', background: 'white', cursor: 'pointer' }}>
                 Cancelar
               </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
-              >
-                {isSubmitting ? "Guardando..." : "Guardar Candidato"}
+              <button type="submit" style={{ padding: '12px 24px', borderRadius: '8px', background: '#1A73E8', color: 'white', border: 'none', cursor: 'pointer', fontWeight: '500' }}>
+                Guardar Candidato
               </button>
             </div>
           </form>
@@ -445,4 +122,6 @@ export default function RegisterTalent({ onRegister, onBack }) {
       </div>
     </div>
   );
-}
+};
+
+export default RegisterTalent;

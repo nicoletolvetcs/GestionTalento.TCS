@@ -153,7 +153,7 @@ const TalentSearch = ({ onSearch }) => {
         if (onSearch) {
             onSearch({
                 area: selectedArea,
-                especialidad: selectedSpecialty, 
+                especialidad: selectedSpecialty,
                 salario: salary,
                 moneda: currency,
             });

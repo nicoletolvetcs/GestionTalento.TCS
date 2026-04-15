@@ -10,6 +10,7 @@ function App() {
   const talentosMock = [
     { id: 1, nombre: "Carlos", apellido: "Pérez", area: "Sistemas" },
     { id: 2, nombre: "Ana", apellido: "Gómez", area: "Ventas" },
+    { id: 3, nombre: "Laura", apellido: "Martínez", area: "Diseño" },
   ];
 
   return (
@@ -30,7 +31,6 @@ function App() {
           <InterviewForm
             talents={talentosMock}
             onBack={() => setCurrentPage("search")}
-            onSave={(datos) => console.log("Datos a guardar:", datos)}
           />
         )}
       </main>

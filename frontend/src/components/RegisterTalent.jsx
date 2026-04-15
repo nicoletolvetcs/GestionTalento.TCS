@@ -1,8 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaArrowLeft } from "react-icons/fa";
+import ciudadesVE from '../ciudadesVE.json';
+import api from '../api';
 
+const FormSelect = ({ label, value, onChange, options, width = "100%", defaultOption = "Seleccione...", disabled = false }) => (
+  <div style={{ width, marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <label style={{ color: '#1F2937', fontSize: '14px', fontWeight: '500', fontFamily: 'Inter' }}>
+      {label}
+    </label>
+    <select
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      style={{
+        height: '42px',
+        padding: '0 16px',
+        borderRadius: '8px',
+        border: '1px solid #E5E7EB',
+        fontSize: '16px',
+        fontFamily: 'Inter',
+        outline: 'none',
+        backgroundColor: disabled ? '#F3F4F6' : 'white',
+        color: disabled ? '#6B7280' : 'inherit',
+        cursor: disabled ? 'not-allowed' : 'pointer'
+      }}
+    >
+      <option value="">{defaultOption}</option>
+      {options?.map((opt, idx) => (
+        <option key={idx} value={opt}>{opt}</option>
+      ))}
+    </select>
+  </div>
+);
 
-const FormInput = ({ label, placeholder, type = "text", value, onChange, width = "100%" }) => (
+const FormInput = ({ label, placeholder, type = "text", value, onChange, width = "100%", disabled = false, readOnly = false }) => (
   <div style={{ width, marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
     <label style={{ color: '#1F2937', fontSize: '14px', fontWeight: '500', fontFamily: 'Inter' }}>
       {label}
@@ -12,6 +43,8 @@ const FormInput = ({ label, placeholder, type = "text", value, onChange, width =
       placeholder={placeholder}
       value={value}
       onChange={onChange}
+      disabled={disabled}
+      readOnly={readOnly}
       style={{
         height: '42px',
         padding: '0 16px',
@@ -19,7 +52,9 @@ const FormInput = ({ label, placeholder, type = "text", value, onChange, width =
         border: '1px solid #E5E7EB',
         fontSize: '16px',
         fontFamily: 'Inter',
-        outline: 'none'
+        outline: 'none',
+        backgroundColor: disabled || readOnly ? '#F3F4F6' : 'white',
+        color: disabled || readOnly ? '#6B7280' : 'inherit'
       }}
     />
   </div>
@@ -38,7 +73,7 @@ const FormSection = ({ title, children }) => (
   </div>
 );
 
-const FileDropzone = ({ label, helperText }) => (
+const FileDropzone = ({ label, helperText, accept, maxFiles, files, onChange }) => (
   <div style={{ flex: '1', minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
     <span style={{ color: '#1F2937', fontSize: '14px', fontWeight: '500' }}>{label}</span>
     <div style={{
@@ -52,14 +87,78 @@ const FileDropzone = ({ label, helperText }) => (
       cursor: 'pointer',
       backgroundColor: '#FAFBFC'
     }}>
-      <div style={{ color: '#6B7280', fontSize: '14px' }}>Arrastra el archivo aquí</div>
-      <div style={{ color: '#9CA3AF', fontSize: '12px' }}>{helperText}</div>
+      <input
+        type="file"
+        accept={accept}
+        style={{ display: 'none' }}
+        onChange={onChange}
+      />
+      {files && files.legth > 0 ? (
+        <div style={{ color: '#1A73E8', fontSize: '14px', fontWeight: 'bold' }}>
+          {files.length} archivo(s) seleccionado(s)
+        </div>
+      ) : (
+        <>
+          <div style={{ color: '#6B7280', fontSize: '14px' }}>Arrastra o haz clic aquí</div>
+          <div style={{ color: '#9CA3AF', fontSize: '12px' }}>{helperText}</div>
+        </>
+      )}
     </div>
   </div>
 );
 
 
 const RegisterTalent = ({ onBack }) => {
+  const [formData, setFormData] = useState({
+    cedula: '',
+    nombre_completo: '',
+    email: '',
+    telefono: '',
+  });
+  const [pais, setPais] = useState('');
+  const [ciudad, setCiudad] = useState('');
+  // Estado para las areas de trabajo 
+  const [areas, setAreas] = useState([]);
+  const [selectedArea, setSelectedArea] = useState('');
+  //Estado para las expectativas salariales
+  const [salarial, setSalarial] = useState('');
+  // Estados para los Archivos
+  const [docsIdentidad, setDocsIdentidad] = useState([]); // Array de máx 3
+  const [cv, setCv] = useState(null); // Archivo único (máx 1)
+
+  useEffect(() => {
+    const cargarAreas = async () => {
+      try {
+        const respuesta = await
+          api.get('areas/');
+        setAreas(respuesta.data);
+      } catch (error) {
+        console.error("Error al cargar áreas:", error);
+      }
+    };
+    cargarAreas();
+  }, []);
+
+  const handleDocsIdentidadChange = (e) => {
+    const choosenFiles = Array.from(e.target.files);
+    if (choosenFiles.length > 3) {
+      alert("Solamente puedes subir un máximo de 3 archivos en esta sección.");
+      setDocsIdentidad(choosenFiles.slice(0, 3));
+    } else {
+      setDocsIdentidad(choosenFiles);
+    }
+  };
+  const handleCvChange = (e) => {
+    const choosenFile = Array.from(e.target.files);
+    if (choosenFile.length > 1) {
+      alert("Solamente puedes subir un archivo en esta sección.");
+      setCv(choosenFile.slice(0, 1));
+    } else {
+      setCv(choosenFile);
+    }
+  };
+
+
   return (
     <div style={{ backgroundColor: 'rgb(243, 244, 246)', width: '100%', minHeight: 'calc(100vh - 68px)', boxSizing: 'border-box' }}>
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '36px 24px', fontSize: '16px', fontFamily: '"Inter", sans-serif', fontWeight: 600 }}>
@@ -81,30 +180,69 @@ const RegisterTalent = ({ onBack }) => {
             <FormSection title="I. Datos Personales">
               <FormInput label="Nombre Completo *" placeholder="Nombres y Apellidos" />
               <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
-                <FormInput label="Identificación *" placeholder="V-12345678" width="50%" />
+                <FormInput label="Identificación *" placeholder="12345678" width="50%" />
                 <FormInput label="Fecha de Nacimiento *" type="date" width="50%" />
               </div>
               <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
-                <FormInput label="Teléfono *" placeholder="+58 412..." width="50%" />
+                <FormInput label="Teléfono *" placeholder="+584121234567" width="50%" />
                 <FormInput label="Correo Electrónico *" type="email" placeholder="correo@ejemplo.com" width="50%" />
               </div>
-              <FormInput label="Dirección *" placeholder="Direccion completa" />
+              <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
+                <FormSelect
+                  label="País *"
+                  value={pais}
+                  onChange={(e) => {
+                    setPais(e.target.value);
+                    if (e.target.value !== 'Venezuela') setCiudad('');
+                  }}
+                  options={['Venezuela']}
+                  width="50%"
+                  defaultOption="Seleccione un país..."
+                />
+
+                {pais === 'Venezuela' ? (
+                  <FormSelect
+                    label="Ciudad *"
+                    value={ciudad}
+                    onChange={(e) => setCiudad(e.target.value)}
+                    options={ciudadesVE}
+                    width="50%"
+                    defaultOption="Seleccione una ciudad..."
+                  />
+                ) : (
+                  <FormSelect
+                    label="Ciudad *"
+                    value=""
+                    onChange={() => { }}
+                    options={[]}
+                    width="50%"
+                    defaultOption="Seleccione un país primero..."
+                    disabled
+                  />
+                )}
+              </div>
+              <FormInput label="Dirección *" placeholder="Direccion corta" />
             </FormSection>
 
             <FormSection title="II. Perfil Profesional">
               <div style={{ width: '100%' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>Área de Trabajo *</label>
-                <select style={{ width: '100%', height: '42px', borderRadius: '8px', border: '1px solid #E5E7EB', outline: 'none' }}>
+                <select value={selectedArea} onChange={(e) => setSelectedArea(e.target.value)} style={{ width: '100%', height: '42px', borderRadius: '8px', border: '1px solid #E5E7EB', outline: 'none' }}>
                   <option>Seleccione un área...</option>
+                  {areas.map((area) => (
+                    <option key={area.id_area} value={area.id_area}>
+                      {area.nombre}
+                    </option>
+                  ))}
                 </select>
               </div>
             </FormSection>
 
             <FormSection title="III. Documentación y Aspiración">
-              <FormInput label="Expectativa Salarial *" type="number" placeholder="Ej: 35000" />
+              <FormInput label="Expectativa Salarial " type="number" placeholder="Ej: 800" value={salarial} onChange={(e) => setSalarial(e.target.value)} />
               <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
-                <FileDropzone label="Documento de Identidad" helperText="PDF o JPG (máx. 5MB)" />
-                <FileDropzone label="Referencias Personales" helperText="PDF o JPG (máx. 5MB)" />
+                <FileDropzone label="Documento de Identidad y Referencias Personales" helperText="PDF o JPG (máx. 5MB)" accept=".pdf', '.jpg', '.jpeg" maxFiles={3} files={docsIdentidad} onChange={handleDocsIdentidadChange} />
+                <FileDropzone label="Curriculum Vitae" helperText="PDF o JPG (máx. 5MB)" accept=".pdf', '.jpg', '.jpeg" maxFiles={1} files={cv} onChange={handleCvChange} />
               </div>
             </FormSection>
 

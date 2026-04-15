@@ -1,5 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import EmailValidator, MinValueValidator
+from django_countries import countries
+
+CHOICES_PAISES = [('', 'Seleccionar País')] + [(name, name) for code, name in list(countries)]
 
 # Create your models here.
 class Area(models.Model):
@@ -52,15 +56,15 @@ class Candidato(models.Model):
     cedula = models.CharField(max_length=100, unique=True, db_column='numero_identificacion')
     fecha_nacimiento = models.DateField(null=True, blank=True)
     nombre_completo = models.CharField(max_length=150)
-    email = models.EmailField(max_length=150, unique=True)
+    email = models.EmailField(max_length=150, unique=True, validators=[EmailValidator(message="Ingresa un correo electrónico válido.")])
     telefono = models.CharField(max_length=50)
     ciudad = models.CharField(max_length=100, blank=True)
-    pais = models.CharField(max_length=100, blank=True)
+    pais = models.CharField(max_length=100, choices=CHOICES_PAISES,default='Venezuela')
     disponibilidad = models.CharField(max_length=100, blank=True)
     direccion = models.CharField(max_length=200, blank=True)
-    aspiracion_salarial = models.DecimalField(max_digits=12, decimal_places=2)
-    url_documento_id = models.TextField(null=True, blank=True)
-    url_referencias = models.TextField(null=True, blank=True)
+    aspiracion_salarial = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0, message="El salario no puede ser negativo.")])
+    url_documento_id = models.FileField(upload_to='documentos/ids/', null=True, blank=True)
+    url_referencias = models.FileField(upload_to='documentos/referencias/', null=True, blank=True)
     moneda = models.CharField(
         max_length=3,
         choices=MonedaChoices.choices,

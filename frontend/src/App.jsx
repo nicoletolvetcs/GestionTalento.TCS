@@ -2,16 +2,11 @@ import { useState } from "react";
 import Navbar from "./components/Navbar";
 import RegisterTalent from "./components/RegisterTalent";
 import TalentManagement from "./components/TalentManagment";
-import { InterviewForm } from "./components/InterviewForm";
+// 1. Asegúrate de que el nombre del componente importado sea el que usas abajo
+import Interviews from "./components/InterviewForm";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("search");
-
-  const talentosMock = [
-    { id: 1, nombre: "Carlos", apellido: "Pérez", area: "Sistemas" },
-    { id: 2, nombre: "Ana", apellido: "Gómez", area: "Ventas" },
-    { id: 3, nombre: "Laura", apellido: "Martínez", area: "Diseño" },
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -24,15 +19,13 @@ function App() {
 
       <main style={{ padding: "0px 0px 0px" }}>
         {currentPage === "search" && <TalentManagement />}
+
         {currentPage === "register" && (
           <RegisterTalent onBack={() => setCurrentPage("search")} />
         )}
-        {currentPage === "interviews" && (
-          <InterviewForm
-            talents={talentosMock}
-            onBack={() => setCurrentPage("search")}
-          />
-        )}
+
+        {/* 2. CORRECCIÓN AQUÍ: Cambia "interview" por "interviews" */}
+        {currentPage === "interviews" && <Interviews />}
       </main>
     </div>
   );

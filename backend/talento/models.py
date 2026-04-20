@@ -47,6 +47,7 @@ class Candidato(models.Model):
         REMOTO = 'Remoto', 'Remoto'
         PRESENCIAL = 'Presencial', 'Presencial'
         HIBRIDO = 'Híbrido', 'Híbrido'
+        NEGOCIABLE = 'Negociable', 'Negociable'
 
     class MonedaChoices(models.TextChoices):
         USD = 'USD', 'USD'

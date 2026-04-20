@@ -9,7 +9,7 @@ function App() {
   const [currentPage, setCurrentPage] = useState("search");
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-10">
       <Navbar
         userName="Nicole Tolve"
         userRole="Administrador"

@@ -3,18 +3,18 @@ import { FiSearch, FiUserPlus, FiClipboard } from "react-icons/fi";
 import { FaBuilding } from "react-icons/fa";
 
 const NavButton = ({ label, icon, active = false, onClick }) => {
-  // Usamos rounded-lg para borde suavemente redondeado
   const baseStyle =
     "flex items-center gap-[8px] px-6 py-[8px] rounded-[8px] cursor-pointer border-none font-medium text-[15px]";
   const activeStyle = "bg-[#1A73E8] text-[#ffffff] shadow-sm";
-  const inactiveStyle = "hover:bg-gray-50 hover:shadow-sm text-gray-600 bg-transparent";
+  const inactiveStyle =
+    "hover:bg-gray-50 hover:shadow-sm text-gray-600 bg-transparent";
 
   return (
     <button
       type="button"
       onClick={onClick}
       className={`${baseStyle} ${active ? activeStyle : inactiveStyle}`}
-      style={{ transition: 'all 0.2s ease-in-out' }}
+      style={{ transition: "all 0.2s ease-in-out" }}
     >
       {icon && <span className="text-[18px] flex items-center">{icon}</span>}
       <span>{label}</span>
@@ -74,29 +74,29 @@ const Navbar = ({ userName, userRole, activePage, onNavChange }) => {
       {/* Perfil de Usuario Integrado y Clicable */}
       <div className="flex-1 flex justify-end items-center">
         <div
-          className="flex items-center p-1.5 pr-4 pl-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-          style={{ marginRight: "12px", gap: "12px" }}
+          className="flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+          style={{ marginRight: "12px", gap: "10px" }}
         >
-          {/* Textos del Usuario */}
-          <div className="flex flex-col items-end justify-center" style={{ gap: "2px" }}>
-            <span className="text-[14px] font-semibold text-slate-800 leading-none">
+          {/* Textos del Usuario - Clases corregidas para evitar corte */}
+          <div className="flex flex-col items-end justify-center mr-2">
+            <span className="text-[14px] font-semibold text-slate-800 leading-tight text-right whitespace-nowrap">
               {userName}
             </span>
-            <span className="text-[13px] font-normal text-[#6B7280] leading-none">
+            <span className="text-[13px] font-normal text-[#6B7280] leading-tight text-right whitespace-nowrap">
               {userRole}
             </span>
           </div>
 
           {/* Avatar Circular */}
           <div
-            className="w-[40px] h-[40px] bg-[#2563eb] rounded-full flex items-center justify-center font-medium text-[15px] shadow-sm tracking-wide"
+            className="w-[50px] h-[50px] bg-[#2563eb] rounded-full flex items-center justify-center font-medium text-[15px] shadow-sm tracking-wide shrink-0"
             style={{ color: "#ffffff" }}
           >
             {userName
               ? userName
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
               : "U"}
           </div>
         </div>

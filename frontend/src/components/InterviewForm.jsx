@@ -4,13 +4,14 @@ import api from "../api";
 
 const InterviewForm = ({ onBack }) => {
   const [selectedCandidate, setSelectedCandidate] = useState("");
+  const [dictamen, setDictamen] = useState("");
   const [ratings, setRatings] = useState({
     tecnica: 0,
     comunicacion: 0,
     interes: 0,
   });
 
-  // Datos simulados para el ejemplo (esto vendría de tu API)
+  // Datos simulados para el ejemplo
   const candidateInfo =
     selectedCandidate === "1"
       ? {
@@ -113,6 +114,38 @@ const InterviewForm = ({ onBack }) => {
             <StarRating label="Nivel de Interés" category="interes" />
 
             <div style={styles.footer}>
+              <h3 style={styles.sectionTitle}>Dictamen Final *</h3>
+              <div
+                style={{ display: "flex", gap: "10px", marginBottom: "20px" }}
+              >
+                {[
+                  { label: "APROBADO", val: "aprobado" },
+                  { label: "NO APROBADO", val: "no_aprobado" },
+                  { label: "EN ESPERA", val: "en_espera" },
+                ].map((opt) => (
+                  <div
+                    key={opt.val}
+                    onClick={() => setDictamen(opt.val)}
+                    style={{
+                      ...styles.optionCard,
+                      ...(dictamen === opt.val ? styles.optionSelected : {}),
+                    }}
+                  >
+                    {opt.label}
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginBottom: "20px" }}>
+                <label style={styles.subLabel}>
+                  Justificación del Dictamen *
+                </label>
+                <textarea
+                  style={styles.textarea}
+                  placeholder="Explique brevemente el porqué de su decisión..."
+                />
+              </div>
+
               <button style={styles.cancelBtn} onClick={onBack}>
                 Cancelar
               </button>
@@ -181,7 +214,7 @@ const styles = {
     borderRadius: "50%",
     display: "flex",
     alignItems: "center",
-    justifyCenter: "center",
+    justifyContent: "center",
     fontWeight: "bold",
   },
   tagContainer: { display: "flex", gap: "8px", marginTop: "5px" },
@@ -227,10 +260,24 @@ const styles = {
   },
   ratingLabel: { fontSize: "14px" },
   footer: {
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: "15px",
     marginTop: "30px",
+  },
+  optionCard: {
+    flex: 1,
+    padding: "12px",
+    borderRadius: "8px",
+    border: "1px solid #D1D5DB",
+    cursor: "pointer",
+    textAlign: "center",
+    fontWeight: "600",
+    fontSize: "13px",
+    backgroundColor: "white",
+    transition: "all 0.2s",
+  },
+  optionSelected: {
+    borderColor: "#1A73E8",
+    backgroundColor: "#EFF6FF",
+    color: "#1A73E8",
   },
   cancelBtn: {
     padding: "10px 20px",
@@ -238,6 +285,7 @@ const styles = {
     border: "1px solid #D1D5DB",
     background: "white",
     cursor: "pointer",
+    marginRight: "10px",
   },
   saveBtn: {
     padding: "10px 20px",

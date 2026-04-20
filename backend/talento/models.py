@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import EmailValidator, MinValueValidator
+from django.core.validators import EmailValidator, MinValueValidator, MaxValueValidator
 from django_countries import countries
 
 CHOICES_PAISES = [('', 'Seleccionar País')] + [(name, name) for code, name in list(countries)]
@@ -104,9 +104,31 @@ class Entrevista(models.Model):
     entrevistador = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, db_column='entrevistador_id')
     fecha_entrevista = models.DateTimeField()
     observaciones = models.TextField()
+    puntuacion_tecnica = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        default=1
+    )
+    puntuacion_comunicacion = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        default=1
+    )
+    puntuacion_interes = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        default=1
+    )
     eligibilidad = models.CharField(max_length=100) # En el diagrama dice "type", lo mapeamos como CharField
+    justificacion_dictamen = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Explique brevemente el porqué de su decisión"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
-
+  
     class Meta:
         db_table = 'entrevistas'
+    
+    def __str__(self):
+        return f"Entrevista {self.candidato} - {self.eligibilidad}"
+    
+
         

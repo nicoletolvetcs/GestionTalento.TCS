@@ -44,4 +44,6 @@ class EntrevistaSerializer(serializers.ModelSerializer):
         fields = ['id_entrevista', 'candidato', 
                 'candidato_nombre', 'entrevistador', 
                 'entrevistador_nombre', 'fecha_entrevista', 
-                'observaciones', 'eligibilidad', 'created_at']
+                'observaciones', 'eligibilidad', 'puntuacion_tecnica', 
+                'puntuacion_comunicacion', 'puntuacion_interes', 
+                'justificacion_dictamen','created_at']

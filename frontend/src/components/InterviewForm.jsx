@@ -94,8 +94,9 @@ const InterviewForm = ({ onBack }) => {
   );
 
   return (
-    <div style={styles.container}>
-      <button onClick={onBack} style={styles.backButton}>
+    <div style={styles.pageWrapper}>
+      <div style={styles.container}>
+        <button onClick={onBack} style={styles.backButton}>
         <FaArrowLeft /> Volver a Búsqueda
       </button>
 
@@ -235,14 +236,21 @@ const InterviewForm = ({ onBack }) => {
           </>
         )}
       </div>
+      </div>
     </div>
   );
 };
 
 const styles = {
+  pageWrapper: {
+    backgroundColor: 'rgb(243, 244, 246)',
+    width: '100%',
+    minHeight: 'calc(100vh - 68px)',
+    boxSizing: 'border-box',
+  },
   container: {
-    padding: "40px",
-    maxWidth: "900px",
+    padding: "36px 24px",
+    maxWidth: "1100px",
     margin: "0 auto",
     fontFamily: "Inter",
   },

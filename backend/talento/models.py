@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import EmailValidator, MinValueValidator, MaxValueValidator
 from django_countries import countries
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+
 
 CHOICES_PAISES = [('', 'Seleccionar País')] + [(name, name) for code, name in list(countries)]
 
@@ -38,6 +41,7 @@ class Candidato(models.Model):
         ELEGIBLE = 'Elegible', 'Elegible'
         EN_CARTERA = 'En Cartera', 'En Cartera'
         NO_ELEGIBLE = 'No Elegible', 'No Elegible'
+        EN_REVISION = 'En Revision', 'En Revision'
 
     #  Enum para Disponibilidad ---
     class DisponibilidadChoices(models.TextChoices):
@@ -129,6 +133,30 @@ class Entrevista(models.Model):
     
     def __str__(self):
         return f"Entrevista {self.candidato} - {self.eligibilidad}"
+
+
+@receiver([post_save, post_delete], sender=Entrevista)
+def sincronizar_estatus_candidato(sender, instance, **kwargs):
+    candidato = instance.candidato
+    # Traer la entrevista más reciente basándonos en la fecha de creación
+    ultima_entrevista = Entrevista.objects.filter(candidato=candidato).order_by('-created_at').first()
+    
+    if ultima_entrevista:
+        # Mapear el 'val' del frontend a los choices reales de BD
+        mapeo = {
+            'elegible': Candidato.EstatusCandidato.ELEGIBLE,
+            'en_cartera': Candidato.EstatusCandidato.EN_CARTERA,
+            'no_elegible': Candidato.EstatusCandidato.NO_ELEGIBLE,
+            'en_revision': Candidato.EstatusCandidato.EN_REVISION,
+        }
+        # Si no consigue coincidencia, pasa a Pendiente
+        candidato.estatus = mapeo.get(ultima_entrevista.eligibilidad, Candidato.EstatusCandidato.PENDIENTE)
+    else:
+        # Si se eliminan todas sus entrevistas, vuelve a empezar
+        candidato.estatus = Candidato.EstatusCandidato.PENDIENTE
+        
+    candidato.save() # Se dispara la actualización
+
     
 
         

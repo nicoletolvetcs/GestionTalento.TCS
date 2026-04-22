@@ -3,7 +3,7 @@ import TalentSearch from './TalentSearch';
 import TalentTable from './TalentTable';
 import api from '../api';
 
-const TalentManagement = () => {
+const TalentManagement = ({ onVerFicha }) => {
     const [candidatos, setCandidatos] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -43,7 +43,7 @@ const TalentManagement = () => {
                     Buscando en la base de datos...
                 </div>
             ) : (
-                <TalentTable data={candidatos} />
+                <TalentTable data={candidatos} onVerFicha={onVerFicha} />
             )}
         </div>
     );

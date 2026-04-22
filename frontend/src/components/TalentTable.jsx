@@ -53,7 +53,7 @@ const ActionButtons = ({ onView, onToggleStatus, onDelete }) => (
         fontSize: "20px",
         color: "#3B82F6",
       }}
-      title="Ver detalles"
+      title="Ver Ficha de Reporte"
     >
       <IoEyeOutline />
     </button>
@@ -89,7 +89,7 @@ const ActionButtons = ({ onView, onToggleStatus, onDelete }) => (
 );
 
 // 3. Fila de la Tabla (con efecto hover)
-const TalentRow = ({ talent }) => {
+const TalentRow = ({ talent, onVerFicha }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -137,13 +137,13 @@ const TalentRow = ({ talent }) => {
         <StatusBadge status={talent.estatus} />
       </td>
       <td style={{ padding: '16px 24px' }}>
-        <ActionButtons />
+        <ActionButtons onView={() => onVerFicha && onVerFicha(talent)} />
       </td>
     </tr>
   );
 };
 // 4. Contenedor Principal
-const TalentTable = ({ data = [] }) => {
+const TalentTable = ({ data = [], onVerFicha }) => {
   return (
     <div
       style={{
@@ -208,7 +208,7 @@ const TalentTable = ({ data = [] }) => {
           <tbody>
             {data.length > 0 ? (
               data.map(talent => (
-                <TalentRow key={talent.id_candidato} talent={talent} />
+                <TalentRow key={talent.id_candidato} talent={talent} onVerFicha={onVerFicha} />
               ))
             ) : (
               <tr>

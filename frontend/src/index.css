@@ -2,3 +2,28 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@media print {
+
+  /* Forzar fondo blanco y eliminar márgenes de navegador */
+  @page {
+    margin: 0;
+    size: auto;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  /* Ocultar elementos innecesarios */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Asegurar que el contenedor ocupe toda la hoja */
+  main {
+    width: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+}

@@ -44,3 +44,10 @@ class CandidatoViewSet(viewsets.ModelViewSet):
 class EntrevistaViewSet(viewsets.ModelViewSet):
     queryset = Entrevista.objects.all()
     serializer_class = EntrevistaSerializer
+    
+    def get_queryset(self):
+        queryset = Entrevista.objects.all().order_by('-created_at')
+        candidato_id = self.request.query_params.get('candidato')
+        if candidato_id is not None:
+            queryset = queryset.filter(candidato_id=candidato_id)
+        return queryset

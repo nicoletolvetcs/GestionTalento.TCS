@@ -1,5 +1,11 @@
 import React from "react";
-import { FiSearch, FiUserPlus, FiClipboard } from "react-icons/fi";
+import {
+  FiSearch,
+  FiUserPlus,
+  FiClipboard,
+  FiCheckCircle,
+  FiActivity,
+} from "react-icons/fi";
 import { FaBuilding } from "react-icons/fa";
 
 const NavButton = ({ label, icon, active = false, onClick }) => {
@@ -33,7 +39,7 @@ const Navbar = ({ userName, userRole, activePage, onNavChange }) => {
         backgroundColor: "#ffffff",
       }}
     >
-      {/* Logo y el ícono de FaBuilding integrados */}
+      {/* Logo */}
       <div
         className="flex-1 flex justify-start items-center gap-3"
         style={{ marginLeft: "32px" }}
@@ -57,6 +63,7 @@ const Navbar = ({ userName, userRole, activePage, onNavChange }) => {
           icon={<FiSearch />}
           onClick={() => onNavChange("search")}
         />
+
         <NavButton
           label="Registrar"
           active={activePage === "register"}
@@ -71,13 +78,12 @@ const Navbar = ({ userName, userRole, activePage, onNavChange }) => {
         />
       </div>
 
-      {/* Perfil de Usuario Integrado y Clicable */}
+      {/* Perfil de Usuario */}
       <div className="flex-1 flex justify-end items-center">
         <div
           className="flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
           style={{ marginRight: "12px", gap: "10px" }}
         >
-          {/* Textos del Usuario - Clases corregidas para evitar corte */}
           <div className="flex flex-col items-end justify-center mr-2">
             <span className="text-[14px] font-semibold text-slate-800 leading-tight text-right whitespace-nowrap">
               {userName}
@@ -87,7 +93,6 @@ const Navbar = ({ userName, userRole, activePage, onNavChange }) => {
             </span>
           </div>
 
-          {/* Avatar Circular */}
           <div
             className="w-[50px] h-[50px] bg-[#2563eb] rounded-full flex items-center justify-center font-medium text-[15px] shadow-sm tracking-wide shrink-0"
             style={{ color: "#ffffff" }}

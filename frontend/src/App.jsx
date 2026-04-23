@@ -2,14 +2,15 @@ import { useState } from "react";
 import Navbar from "./components/Navbar";
 import RegisterTalent from "./components/RegisterTalent";
 import TalentManagement from "./components/TalentManagment";
-// 1. Asegúrate de que el nombre del componente importado sea el que usas abajo
 import Interviews from "./components/InterviewForm";
+// 1. IMPORTA EL COMPONENTE
+import EstadoConsulta from "./components/EstadoConsulta";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("search");
 
   return (
-    <div className="min-h-screen bg-gray-10">
+    <div className="min-h-screen bg-slate-50">
       <Navbar
         userName="Nicole Tolve"
         userRole="Administrador"
@@ -17,15 +18,17 @@ function App() {
         onNavChange={setCurrentPage}
       />
 
-      <main style={{ padding: "0px 0px 0px" }}>
+      <main className="p-4 md:p-6 w-full">
         {currentPage === "search" && <TalentManagement />}
 
         {currentPage === "register" && (
           <RegisterTalent onBack={() => setCurrentPage("search")} />
         )}
 
-        {/* 2. CORRECCIÓN AQUÍ: Cambia "interview" por "interviews" */}
         {currentPage === "interviews" && <Interviews />}
+
+        {/* 2. USA EL NOMBRE CORRECTO DEL COMPONENTE */}
+        {currentPage === "status" && <EstadoConsulta />}
       </main>
     </div>
   );

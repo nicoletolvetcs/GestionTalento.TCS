@@ -13,7 +13,10 @@ function App() {
     setSelectedCandidate(candidato);
     setCurrentPage("report");
   }
-
+  const handleRellenarEntrevista = (candidato) => {
+    setSelectedCandidate(candidato);
+    setCurrentPage("interviews");
+  }
   return (
     <div className="min-h-screen bg-gray-10">
       <Navbar
@@ -24,7 +27,7 @@ function App() {
       />
 
       <main style={{ padding: "0px 0px 0px" }}>
-        {currentPage === "search" && <TalentManagement onVerFicha={handleVerFicha} />}
+        {currentPage === "search" && <TalentManagement onVerFicha={handleVerFicha} onRellenarEntrevista={handleRellenarEntrevista} />}
 
         {currentPage === "register" && (
           <RegisterTalent onBack={() => setCurrentPage("search")} onverFicha={handleVerFicha} />

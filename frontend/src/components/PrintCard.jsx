@@ -113,16 +113,16 @@ const InterviewEvaluation = ({ evalData }) => {
       <DataField
         label="Notas de la Entrevista:"
         fullWidth
-        customContent={<GrayBox>{evalData?.observaciones}</GrayBox>}
+        customContent={<GrayBox>{evalData?.notas}</GrayBox>}
       />
       <DataField
         label="Puntuación de Competencias:"
         fullWidth
         customContent={
           <div style={{ display: 'flex', gap: '48px', marginTop: '4px', flexWrap: 'wrap' }}>
-            <StarRating label="Técnica:" score={evalData?.puntuacion_tecnica} />
-            <StarRating label="Comunicación:" score={evalData?.puntuacion_comunicacion} />
-            <StarRating label="Interés:" score={evalData?.puntuacion_interes} />
+            <StarRating label="Técnica:" score={evalData?.scoreTecnica} />
+            <StarRating label="Comunicación:" score={evalData?.scoreComunicacion} />
+            <StarRating label="Interés:" score={evalData?.scoreInteres} />
           </div>
         }
       />
@@ -165,7 +165,7 @@ const FinalAssessment = ({ assessment }) => {
       <DataField
         label="Observaciones de Cierre:"
         fullWidth
-        customContent={<GrayBox>{assessment?.justificacion_dictamen}</GrayBox>}
+        customContent={<GrayBox>{assessment?.observaciones}</GrayBox>}
       />
     </Section>
   );

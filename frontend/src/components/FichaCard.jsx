@@ -23,7 +23,7 @@ export const DataField = ({ label, value, customContent, fullWidth }) => (
     <div style={{
         display: 'flex',
         flexDirection: 'column',
-        flex: fullWidth ? '1 1 100%' : '1 1 200px',
+        flex: fullWidth ? '1 1 100%' : '1 1 120px',
         gap: '4px'
     }}>
         <span style={{ color: '#6B7280', fontSize: '14px' }}>{label}</span>
@@ -52,7 +52,7 @@ export const Badge = ({ text }) => (
 
 // Caja gris de texto (Notas, Observaciones)
 export const GrayBox = ({ children }) => (
-    <div style={{
+    <div className="gray-box" style={{
         background: '#F5F7FA',
         padding: '16px',
         borderRadius: '4px',
@@ -67,14 +67,19 @@ export const GrayBox = ({ children }) => (
 
 // Estrellas de puntuación
 export const StarRating = ({ label, score }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <span style={{ color: '#6B7280', fontSize: '14px' }}>{label}</span>
-        <div style={{ display: 'flex', gap: '4px', color: '#F59E0B', fontSize: '18px' }}>
-            {[1, 2, 3, 4, 5].map((star) => (
-                star <= score
-                    ? <FaStar key={star} />
-                    : <FaRegStar key={star} style={{ color: '#D1D5DB' }} />
-            ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#F59E0B', fontSize: '18px' }}>
+            <div className="no-print" style={{ display: 'flex', gap: '4px' }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                    star <= score
+                        ? <FaStar key={star} />
+                        : <FaRegStar key={star} style={{ color: '#D1D5DB' }} />
+                ))}
+            </div>
+            <span style={{ color: '#1F2937', fontWeight: 'bold', fontSize: '16px' }}>
+                {score}/5
+            </span>
         </div>
     </div>
 );

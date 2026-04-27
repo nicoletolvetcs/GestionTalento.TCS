@@ -70,25 +70,24 @@ const GeneralInfo = ({ data }) => (
 // ─── II. Perfil Profesional ──────────────────────────────────────────────────
 const ProfessionalProfile = ({ data }) => (
   <Section title="II. PERFIL PROFESIONAL Y ASPIRACIÓN">
-    <DataField label="• Áreas de Interés:" value={data.area} fullWidth />
+    <DataField label="• Áreas de Interés:" value={data.area} />
+    <DataField label="• Aspiración Salarial:" value={data.aspiracion} />
+    <DataField label="• Disponibilidad:" value={data.disponibilidad} />
     <DataField
-      label="• Especialidades:"
-      fullWidth
+      label="• Especialidades:" fullWidth={true}
       customContent={
         <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
           {data.especialidades?.map((esp, i) => <Badge key={i} text={esp} />)}
         </div>
       }
     />
-    <DataField label="• Aspiración Salarial:" value={data.aspiracion} fullWidth />
-    <DataField label="• Disponibilidad:" value={data.disponibilidad} fullWidth />
   </Section>
 );
 
 // ─── III. Documentación ──────────────────────────────────────────────────────
 const Documentation = ({ docs }) => (
   <Section title="III. DOCUMENTACIÓN ADJUNTA">
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'row', gap: '80px', width: '100%' }}>
       <CheckItem label="Documento de Identidad y Referencias Personales" checked={docs?.identidad} />
       <CheckItem label="Currículum Vitae" checked={docs?.cv} />
     </div>
@@ -145,23 +144,10 @@ const FinalAssessment = ({ assessment }) => {
   const st = assessment?.status;
   return (
     <Section title="V. DICTAMEN FINAL">
-      <DataField
-        label="Estatus de Elegibilidad:"
-        fullWidth
-        customContent={
-          <div style={{ display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ color: st === 'ELEGIBLE' ? '#10B981' : '#6B7280', fontWeight: st === 'ELEGIBLE' ? 'bold' : '500', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {st === 'ELEGIBLE' ? '✅' : '⬜'} ELEGIBLE
-            </span>
-            <span style={{ color: st === 'EN CARTERA' ? '#1F2937' : '#6B7280', fontWeight: st === 'EN CARTERA' ? 'bold' : '500', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {st === 'EN CARTERA' ? '✅' : '⬜'} EN CARTERA
-            </span>
-            <span style={{ color: st === 'NO ELEGIBLE' ? '#EF4444' : '#6B7280', fontWeight: st === 'NO ELEGIBLE' ? 'bold' : '500', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {st === 'NO ELEGIBLE' ? '✅' : '⬜'} NO ELEGIBLE
-            </span>
-          </div>
-        }
-      />
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+        <span style={{ color: '#6B7280', fontSize: '14px' }}>Estatus de Elegibilidad:</span>
+        <span style={{ color: '#1F2937', fontSize: '16px', fontWeight: 'bold' }}>{st}</span>
+      </div>
       <DataField
         label="Observaciones de Cierre:"
         fullWidth
@@ -248,7 +234,7 @@ const PrintCard = ({ talentData, onBack }) => {
     <div style={{ padding: '24px', background: '#F5F7FA', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: 'Inter, sans-serif' }}>
 
       {/* Barra de controles superiores */}
-      <div style={{ width: '100%', maxWidth: '900px', display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+      <div className="no-print" style={{ width: '100%', maxWidth: '900px', display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
         <button
           onClick={onBack}
           style={{ color: '#1A73E8', fontWeight: '500', background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '6px' }}
@@ -264,7 +250,7 @@ const PrintCard = ({ talentData, onBack }) => {
       </div>
 
       {/* Documento principal */}
-      <div style={{
+      <div className="print-card" style={{
         width: '100%',
         maxWidth: '900px',
         background: 'white',

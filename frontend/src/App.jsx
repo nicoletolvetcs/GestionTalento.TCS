@@ -19,12 +19,14 @@ function App() {
   }
   return (
     <div className="min-h-screen bg-gray-10">
-      <Navbar
-        userName="Nicole Tolve"
-        userRole="Administrador"
-        activePage={currentPage}
-        onNavChange={setCurrentPage}
-      />
+      <div className="no-print">
+        <Navbar
+          userName="Nicole Tolve"
+          userRole="Administrador"
+          activePage={currentPage}
+          onNavChange={setCurrentPage}
+        />
+      </div>
 
       <main style={{ padding: "0px 0px 0px" }}>
         {currentPage === "search" && <TalentManagement onVerFicha={handleVerFicha} onRellenarEntrevista={handleRellenarEntrevista} />}

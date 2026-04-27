@@ -438,8 +438,8 @@ const RegisterTalent = ({ onBack }) => {
                 />
               </div>
               <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
-                <FileDropzone label="Documento de Identidad y Referencias Personales (Opcional)" helperText="PDF o JPG (máx. 5MB)" accept=".pdf, .jpg, .jpeg" maxFiles={3} files={docsIdentidad} onChange={handleDocsIdentidadChange} />
-                <FileDropzone label="Curriculum Vitae *" helperText="PDF o JPG (máx. 5MB)" accept=".pdf, .jpg, .jpeg" maxFiles={1} files={cv} onChange={handleCvChange} />
+                <FileDropzone label="Documento de Identidad y Referencias Personales (Opcional)" helperText="PDF (máx. 10MB)" accept=".pdf" maxFiles={3} files={docsIdentidad} onChange={handleDocsIdentidadChange} />
+                <FileDropzone label="Curriculum Vitae *" helperText="PDF (máx. 10MB)" accept=".pdf" maxFiles={1} files={cv} onChange={handleCvChange} />
               </div>
             </FormSection>
 

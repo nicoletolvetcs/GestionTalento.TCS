@@ -5,14 +5,16 @@
 
 @media print {
 
-  /* Forzar fondo blanco y eliminar márgenes de navegador */
+  /* Forzar fondo blanco y eliminar márgenes de navegador (quita fecha y titulo) */
   @page {
-    margin: 0;
-    size: auto;
+    size: auto !important;
+    margin: 0 !important;
   }
 
   body {
     background: white !important;
+    padding: 10mm 10mm !important;
+    /* Movemos el margen aquí */
   }
 
   /* Ocultar elementos innecesarios */
@@ -25,5 +27,29 @@
     width: 100% !important;
     border: none !important;
     border-radius: 0 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .gray-box {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  .print-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    zoom: 0.85 !important; /* Reduce el tamaño general al 85% para encajar en 1 página */
+  }
+
+  .print-section {
+    page-break-inside: avoid;
   }
 }

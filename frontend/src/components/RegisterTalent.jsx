@@ -33,7 +33,7 @@ const FormSelect = ({ label, value, onChange, options, width = "100%", defaultOp
   </div>
 );
 
-const FormInput = ({ label, placeholder, type = "text", value, onChange, width = "100%", disabled = false, readOnly = false, name }) => (
+const FormInput = ({label, placeholder, type = "text", value, onChange, width = "100%", disabled = false, readOnly = false, name}) => (
   <div style={{ width, marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
     <label style={{ color: '#1F2937', fontSize: '14px', fontWeight: '500', fontFamily: 'Inter' }}>
       {label}
@@ -61,17 +61,33 @@ const FormInput = ({ label, placeholder, type = "text", value, onChange, width =
   </div>
 );
 
-const FormSection = ({ title, children }) => (
-  <div style={{ alignSelf: 'stretch', display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
-    <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '8px' }}>
-      <h3 style={{ color: '#1F2937', fontSize: '18px', fontWeight: '600', fontFamily: 'Inter', margin: 0 }}>
-        {title}
-      </h3>
-    </div>
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
-      {children}
-    </div>
-  </div>
+      const FormSection = ({title, children}) => (
+      <div
+        style={{
+          alignSelf: "stretch",
+          display: "flex",
+          flexDirection: "column",
+          gap: "16px",
+          marginBottom: "32px",
+        }}
+      >
+        <div style={{ borderBottom: "1px solid #E5E7EB", paddingBottom: "8px" }}>
+          <h3
+            style={{
+              color: "#1F2937",
+              fontSize: "18px",
+              fontWeight: "600",
+              fontFamily: "Inter",
+              margin: 0,
+            }}
+          >
+            {title}
+          </h3>
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "16px" }}>
+          {children}
+        </div>
+      </div>
 );
 
 const FileDropzone = ({ label, helperText, accept, maxFiles, files, onChange }) => (
@@ -106,32 +122,31 @@ const FileDropzone = ({ label, helperText, accept, maxFiles, files, onChange }) 
         </>
       )}
     </label>
-  </div>
-);
+    </div>
+    );
 
-
-const RegisterTalent = ({ onBack }) => {
+    const RegisterTalent = ({onBack}) => {
   const [formData, setFormData] = useState({
-    cedula: '',
+      cedula: '',
     nombre_completo: '',
     email: '',
     telefono: '',
     direccion: '',
     fecha_nacimiento: '',
   });
-  const [pais, setPais] = useState('');
-  const [ciudad, setCiudad] = useState('');
+    const [pais, setPais] = useState('');
+    const [ciudad, setCiudad] = useState('');
 
-  // Estado para la data cruda del backend
-  const [areas, setAreas] = useState([]);
-  const [especialidades, setEspecialidades] = useState([]);
+    // Estado para la data cruda del backend
+    const [areas, setAreas] = useState([]);
+    const [especialidades, setEspecialidades] = useState([]);
 
-  // Estado para agregar multiples areas y especiliades a el candidato 
-  const [bloquesAreas, setBloquesAreas] = useState([
-    { area: '', especialidades: [] }
-  ]);
+    // Estado para agregar multiples areas y especiliades a el candidato 
+    const [bloquesAreas, setBloquesAreas] = useState([
+    {area: '', especialidades: [] }
+    ]);
   const agregarBloque = () => {
-    setBloquesAreas([...bloquesAreas, { area: '', especialidades: [] }]);
+      setBloquesAreas([...bloquesAreas, { area: '', especialidades: [] }]);
   };
 
   const handleAreaChange = (index, value) => {
@@ -154,30 +169,30 @@ const RegisterTalent = ({ onBack }) => {
     nuevosBloques.splice(index, 1);
     setBloquesAreas(nuevosBloques);
   };
-  //Estado para las expectativas salariales
-  const [salarial, setSalarial] = useState('');
-  // Estados para los Archivos
-  const [docsIdentidad, setDocsIdentidad] = useState([]); // Array de máx 3
-  const [cv, setCv] = useState(null); // Archivo único (máx 1)
+    //Estado para las expectativas salariales
+    const [salarial, setSalarial] = useState('');
+    // Estados para los Archivos
+    const [docsIdentidad, setDocsIdentidad] = useState([]); // Array de máx 3
+    const [cv, setCv] = useState(null); // Archivo único (máx 1)
 
-  const [disponibilidad, setDisponibilidad] = useState('');
-  const opcionesDisponibilidad = ['Inmediata',
+    const [disponibilidad, setDisponibilidad] = useState('');
+    const opcionesDisponibilidad = ['Inmediata',
     '15 días', '30 días', 'Remoto',
     'Presencial', 'Híbrido', 'Negociable'];
-  const [moneda, setMoneda] = useState('');
-  const opcionesMoneda = ['USD', 'EUR'];
+    const [moneda, setMoneda] = useState('');
+    const opcionesMoneda = ['USD', 'EUR'];
 
   useEffect(() => {
     const cargarDatosIniciales = async () => {
       try {
         const [resAreas, resEspec] = await Promise.all([
-          api.get('areas/'),
-          api.get('especialidades/')
-        ]);
-        setAreas(resAreas.data);
-        setEspecialidades(resEspec.data);
+    api.get('areas/'),
+    api.get('especialidades/')
+    ]);
+    setAreas(resAreas.data);
+    setEspecialidades(resEspec.data);
       } catch (error) {
-        console.error("Error al cargar filtros:", error);
+      console.error("Error al cargar filtros:", error);
       }
     };
     cargarDatosIniciales();
@@ -191,7 +206,7 @@ const RegisterTalent = ({ onBack }) => {
     const choosenFiles = Array.from(e.target.files);
     if (choosenFiles.length > 3) {
       alert("Solamente puedes subir un máximo de 3 archivos en esta sección.");
-      setDocsIdentidad(choosenFiles.slice(0, 3));
+    setDocsIdentidad(choosenFiles.slice(0, 3));
     } else {
       setDocsIdentidad(choosenFiles);
     }
@@ -200,18 +215,18 @@ const RegisterTalent = ({ onBack }) => {
     const choosenFile = Array.from(e.target.files);
     if (choosenFile.length > 1) {
       alert("Solamente puedes subir un archivo en esta sección.");
-      setCv(choosenFile.slice(0, 1));
+    setCv(choosenFile.slice(0, 1));
     } else {
       setCv(choosenFile);
     }
   };
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+      setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Evita que la página se reinicie
+      e.preventDefault(); // Evita que la página se reinicie
 
     const pack = new FormData();
 
@@ -235,7 +250,7 @@ const RegisterTalent = ({ onBack }) => {
 
     if (salarial) {
       pack.append('aspiracion_salarial', salarial);
-      pack.append('moneda', moneda);
+    pack.append('moneda', moneda);
     }
     if (disponibilidad) pack.append('disponibilidad', disponibilidad);
 
@@ -253,33 +268,79 @@ const RegisterTalent = ({ onBack }) => {
 
     try {
       const respuesta = await api.post('candidatos/', pack, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      headers: {'Content-Type': 'multipart/form-data' }
       });
-      alert("Candidato registrado como un éxito!");
+    alert("Candidato registrado como un éxito!");
     } catch (error) {
       console.error("Detalle del error:", error.response?.data || error);
-      const errorMsg = error.response?.data
-        ? JSON.stringify(error.response.data, null, 2)
-        : "Revisa si faltaron datos obligatorios.";
-      alert("Falló la creación. El servidor dice:\n\n" + errorMsg);
+    const errorMsg = error.response?.data
+    ? JSON.stringify(error.response.data, null, 2)
+    : "Revisa si faltaron datos obligatorios.";
+    alert("Falló la creación. El servidor dice:\n\n" + errorMsg);
     }
   };
-  return (
-    <div style={{ backgroundColor: 'rgb(243, 244, 246)', width: '100%', minHeight: 'calc(100vh - 68px)', boxSizing: 'border-box' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '36px 24px', fontSize: '16px', fontFamily: '"Inter", sans-serif', fontWeight: 600 }}>
+    return (
+    <div
+      style={{
+        backgroundColor: "rgb(243, 244, 246)",
+        width: "100%",
+        minHeight: "calc(100vh - 68px)",
+        boxSizing: "border-box",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "1100px",
+          margin: "0 auto",
+          padding: "36px 24px",
+          fontSize: "16px",
+          fontFamily: '"Inter", sans-serif',
+          fontWeight: 600,
+        }}
+      >
         {/* Botón Volver */}
         {onBack && (
           <button
             onClick={onBack}
-            style={{ color: '#1A73E8', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', fontSize: '16px', fontFamily: '"Inter", sans-serif', fontWeight: 600 }}
+            style={{
+              color: "#1A73E8",
+              border: "none",
+              background: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              marginBottom: "20px",
+              fontSize: "16px",
+              fontFamily: '"Inter", sans-serif',
+              fontWeight: 600,
+            }}
           >
             <FaArrowLeft />
             Volver a Búsqueda
           </button>
         )}
 
-        <div style={{ background: 'white', padding: '32px', paddingTop: '24px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', border: '1px solid #E5E7EB' }}>
-          <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '32px', fontFamily: 'Inter' }}>Registro de Nuevo Candidato</h2>
+        <div
+          style={{
+            background: "white",
+            padding: "32px",
+            paddingTop: "24px",
+            borderRadius: "12px",
+            boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
+            border: "1px solid #E5E7EB",
+          }}
+        >
+          <h2
+            style={{
+              fontSize: "24px",
+              fontWeight: "600",
+              marginBottom: "32px",
+              fontFamily: "Inter",
+            }}
+          >
+            Registro de Nuevo Candidato
+          </h2>
 
           <form onSubmit={handleSubmit}>
             <FormSection title="I. Datos Personales">
@@ -292,7 +353,7 @@ const RegisterTalent = ({ onBack }) => {
               <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
                 <FormInput
                   label="Identificación *"
-                  placeholder="12345678"
+                  placeholder="V-12345678"
                   width="50%"
                   value={formData.cedula}
                   onChange={handleInputChange}
@@ -306,7 +367,7 @@ const RegisterTalent = ({ onBack }) => {
               </div>
               <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
                 <FormInput label="Teléfono *"
-                  placeholder="+584121234567"
+                  placeholder="+58 412..."
                   width="50%"
                   value={formData.telefono}
                   onChange={handleInputChange}
@@ -456,7 +517,7 @@ const RegisterTalent = ({ onBack }) => {
         </div>
       </div>
     </div>
-  );
+    );
 };
 
-export default RegisterTalent;
+    export default RegisterTalent;

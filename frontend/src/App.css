@@ -1,17 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Limpieza de márgenes básicos */
-body {
-  margin: 0;
-  background-color: #0c0a0a; /* Fondo gris muy claro para resaltar el formulario blanco */
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
-}
-
-#root {
-  width: 100%;
-}

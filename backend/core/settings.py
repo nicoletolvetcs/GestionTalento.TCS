@@ -37,9 +37,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_countries',
+    'corsheaders',
+    'rest_framework',
+    'talento',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -74,8 +79,12 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'gestion_talento',
+        'USER': 'pasante',
+        'PASSWORD': 'pasante01.',
+        'HOST': '10.20.0.19', 
+        'PORT': '12416',
     }
 }
 
@@ -115,3 +124,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Media files (uploaded documents, CVs, images)
+# MEDIA_ROOT apunta a la raíz del backend porque FileField ya incluye
+# 'documentos/' en su upload_to (ej: 'documentos/referencias/archivo.jpg')
+MEDIA_URL = '/documentos/'
+MEDIA_ROOT = BASE_DIR
+
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+COUNTRIES_ONLY = ['VE']

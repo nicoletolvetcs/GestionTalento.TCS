@@ -1,443 +1,455 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
+import { FaArrowLeft } from "react-icons/fa";
+import ciudadesVE from '../ciudadesVE.json';
+import api from '../api';
 
-/**
- * NOTA PARA EL USUARIO:
- * Para que este componente se vea correctamente, debes asegurarte de que tu archivo
- * 'src/index.css' contenga las siguientes líneas al principio:
- * * @tailwind base;
- * @tailwind components;
- * @tailwind utilities;
- * * Tu configuración de 'tailwind.config.js' y 'main.jsx' que compartiste es correcta.
- */
+const FormSelect = ({ label, value, onChange, options, width = "100%", defaultOption = "Seleccione...", disabled = false }) => (
+  <div style={{ width, marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <label style={{ color: '#1F2937', fontSize: '14px', fontWeight: '500', fontFamily: 'Inter' }}>
+      {label}
+    </label>
+    <select
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      style={{
+        height: '42px',
+        padding: '0 16px',
+        borderRadius: '8px',
+        border: '1px solid #E5E7EB',
+        fontSize: '16px',
+        fontFamily: 'Inter',
+        outline: 'none',
+        backgroundColor: disabled ? '#F3F4F6' : 'white',
+        color: disabled ? '#6B7280' : 'inherit',
+        cursor: disabled ? 'not-allowed' : 'pointer'
+      }}
+    >
+      <option value="">{defaultOption}</option>
+      {options?.map((opt, idx) => (
+        <option key={idx} value={opt}>{opt}</option>
+      ))}
+    </select>
+  </div>
+);
 
-export default function RegisterTalent({ onRegister, onBack }) {
+const FormInput = ({ label, placeholder, type = "text", value, onChange, width = "100%", disabled = false, readOnly = false, name }) => (
+  <div style={{ width, marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <label style={{ color: '#1F2937', fontSize: '14px', fontWeight: '500', fontFamily: 'Inter' }}>
+      {label}
+    </label>
+    <input
+      type={type}
+      name={name}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      readOnly={readOnly}
+      style={{
+        height: '42px',
+        padding: '0 16px',
+        borderRadius: '8px',
+        border: '1px solid #E5E7EB',
+        fontSize: '16px',
+        fontFamily: 'Inter',
+        outline: 'none',
+        backgroundColor: disabled || readOnly ? '#F3F4F6' : 'white',
+        color: disabled || readOnly ? '#6B7280' : 'inherit'
+      }}
+    />
+  </div>
+);
+
+const FormSection = ({ title, children }) => (
+  <div style={{ alignSelf: 'stretch', display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
+    <div style={{ borderBottom: '1px solid #E5E7EB', paddingBottom: '8px' }}>
+      <h3 style={{ color: '#1F2937', fontSize: '18px', fontWeight: '600', fontFamily: 'Inter', margin: 0 }}>
+        {title}
+      </h3>
+    </div>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+      {children}
+    </div>
+  </div>
+);
+
+const FileDropzone = ({ label, helperText, accept, maxFiles, files, onChange }) => (
+  <div style={{ flex: '1', minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <span style={{ color: '#1F2937', fontSize: '14px', fontWeight: '500' }}>{label}</span>
+    <label style={{
+      height: '132px',
+      borderRadius: '8px',
+      border: '2px dashed #E5E7EB',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      cursor: 'pointer',
+      backgroundColor: '#FAFBFC'
+    }}>
+      <input
+        type="file"
+        multiple={maxFiles > 1}
+        accept={accept}
+        style={{ display: 'none' }}
+        onChange={onChange}
+      />
+      {files && files.length > 0 ? (
+        <div style={{ color: '#1A73E8', fontSize: '14px', fontWeight: 'bold' }}>
+          {files.length} archivo(s) seleccionado(s)
+        </div>
+      ) : (
+        <>
+          <div style={{ color: '#6B7280', fontSize: '14px' }}>Arrastra o haz clic aquí</div>
+          <div style={{ color: '#9CA3AF', fontSize: '12px' }}>{helperText}</div>
+        </>
+      )}
+    </label>
+  </div>
+);
+
+
+const RegisterTalent = ({ onBack }) => {
   const [formData, setFormData] = useState({
-    nombreCompleto: "",
-    identificacion: "",
-    fechaNacimiento: "",
-    telefono: "",
-    correoElectronico: "",
-    ciudad: "",
-    pais: "",
-    areaTrabajo: "",
-    especialidad: "",
-    disponibilidad: "Inmediata",
-    expectativaSalarial: "",
-    moneda: "EUR",
-    documentoIdentidad: null,
-    referenciasPersonales: null,
-    aceptaPoliticas: false,
+    cedula: '',
+    nombre_completo: '',
+    email: '',
+    telefono: '',
+    direccion: '',
+    fecha_nacimiento: '',
   });
+  const [pais, setPais] = useState('');
+  const [ciudad, setCiudad] = useState('');
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState("");
+  // Estado para la data cruda del backend
+  const [areas, setAreas] = useState([]);
+  const [especialidades, setEspecialidades] = useState([]);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+  // Estado para agregar multiples areas y especiliades a el candidato 
+  const [bloquesAreas, setBloquesAreas] = useState([
+    { area: '', especialidades: [] }
+  ]);
+  const agregarBloque = () => {
+    setBloquesAreas([...bloquesAreas, { area: '', especialidades: [] }]);
   };
 
-  const handleFileChange = (e) => {
-    const { name, files } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: files[0] || null,
-    }));
+  const handleAreaChange = (index, value) => {
+    const nuevosBloques = [...bloquesAreas];
+    nuevosBloques[index].area = value;
+    // Si cambia de area, se limpian las especialidades previas
+    nuevosBloques[index].especialidades = [];
+    setBloquesAreas(nuevosBloques);
+  };
+
+  const handleEspecialidadesChange = (index, selectedOptions) => {
+    const nuevosBloques = [...bloquesAreas];
+    const values = Array.from(selectedOptions, option => option.value);
+    nuevosBloques[index].especialidades = values;
+    setBloquesAreas(nuevosBloques);
+  };
+
+  const eliminarBloque = (index) => {
+    const nuevosBloques = [...bloquesAreas];
+    nuevosBloques.splice(index, 1);
+    setBloquesAreas(nuevosBloques);
+  };
+  //Estado para las expectativas salariales
+  const [salarial, setSalarial] = useState('');
+  // Estados para los Archivos
+  const [docsIdentidad, setDocsIdentidad] = useState([]); // Array de máx 3
+  const [cv, setCv] = useState(null); // Archivo único (máx 1)
+
+  const [disponibilidad, setDisponibilidad] = useState('');
+  const opcionesDisponibilidad = ['Inmediata',
+    '15 días', '30 días', 'Remoto',
+    'Presencial', 'Híbrido', 'Negociable'];
+  const [moneda, setMoneda] = useState('');
+  const opcionesMoneda = ['USD', 'EUR'];
+
+  useEffect(() => {
+    const cargarDatosIniciales = async () => {
+      try {
+        const [resAreas, resEspec] = await Promise.all([
+          api.get('areas/'),
+          api.get('especialidades/')
+        ]);
+        setAreas(resAreas.data);
+        setEspecialidades(resEspec.data);
+      } catch (error) {
+        console.error("Error al cargar filtros:", error);
+      }
+    };
+    cargarDatosIniciales();
+  }, []);
+
+
+
+
+
+  const handleDocsIdentidadChange = (e) => {
+    const choosenFiles = Array.from(e.target.files);
+    if (choosenFiles.length > 3) {
+      alert("Solamente puedes subir un máximo de 3 archivos en esta sección.");
+      setDocsIdentidad(choosenFiles.slice(0, 3));
+    } else {
+      setDocsIdentidad(choosenFiles);
+    }
+  };
+  const handleCvChange = (e) => {
+    const choosenFile = Array.from(e.target.files);
+    if (choosenFile.length > 1) {
+      alert("Solamente puedes subir un archivo en esta sección.");
+      setCv(choosenFile.slice(0, 1));
+    } else {
+      setCv(choosenFile);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setMessage("");
+    e.preventDefault(); // Evita que la página se reinicie
 
-    // Simulación de espera para el backend
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    const pack = new FormData();
 
-    // Estructura para enviar al backend (FormData es necesario por los archivos)
-    const dataToSend = new FormData();
-    Object.keys(formData).forEach((key) => {
-      dataToSend.append(key, formData[key]);
+    // 1. Agregamos los campos de texto
+    pack.append('cedula', formData.cedula);
+    pack.append('nombre_completo', formData.nombre_completo);
+    pack.append('email', formData.email);
+    pack.append('telefono', formData.telefono);
+    pack.append('direccion', formData.direccion);
+    pack.append('fecha_nacimiento', formData.fecha_nacimiento);
+    pack.append('pais', pais);
+    pack.append('ciudad', ciudad);
+
+    // 3. Agregamos las áreas y especialidades
+    bloquesAreas.forEach(bloque => {
+      bloque.especialidades.forEach(espId => {
+        // Django automáticamente tomará esto como la lista M2M (Muchas a Muchas)
+        pack.append('especialidades', espId);
+      });
     });
 
-    if (typeof onRegister === "function") {
-      onRegister(formData);
+    if (salarial) {
+      pack.append('aspiracion_salarial', salarial);
+      pack.append('moneda', moneda);
+    }
+    if (disponibilidad) pack.append('disponibilidad', disponibilidad);
+
+    // 2. Agregamos los archivos
+    if (docsIdentidad.length > 0) {
+      pack.append('url_documento_id', docsIdentidad[0]);
+    }
+    // Si cv es un array,  tomamos el primer elemento
+    if (cv && cv.length > 0) {
+      pack.append('url_referencias', cv[0]);
     }
 
-    setMessage("Candidato registrado exitosamente.");
-    setIsSubmitting(false);
+    // 4. Agregamos el estatus por defecto
+    pack.append('estatus', 'Pendiente');
+
+    try {
+      const respuesta = await api.post('candidatos/', pack, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      alert("Candidato registrado como un éxito!");
+    } catch (error) {
+      console.error("Detalle del error:", error.response?.data || error);
+      const errorMsg = error.response?.data
+        ? JSON.stringify(error.response.data, null, 2)
+        : "Revisa si faltaron datos obligatorios.";
+      alert("Falló la creación. El servidor dice:\n\n" + errorMsg);
+    }
   };
-
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4 font-sans text-gray-800">
-      <div className="max-w-4xl mx-auto">
-        {/* Botón de volver */}
-        <button
-          onClick={onBack}
-          className="flex items-center text-blue-600 hover:text-blue-800 font-medium text-sm mb-6 transition-colors"
-        >
-          <svg
-            className="w-4 h-4 mr-1"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+    <div style={{ backgroundColor: 'rgb(243, 244, 246)', width: '100%', minHeight: 'calc(100vh - 68px)', boxSizing: 'border-box' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '36px 24px', fontSize: '16px', fontFamily: '"Inter", sans-serif', fontWeight: 600 }}>
+        {/* Botón Volver */}
+        {onBack && (
+          <button
+            onClick={onBack}
+            style={{ color: '#1A73E8', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', fontSize: '16px', fontFamily: '"Inter", sans-serif', fontWeight: 600 }}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
-          Volver a Búsqueda
-        </button>
+            <FaArrowLeft />
+            Volver a Búsqueda
+          </button>
+        )}
 
-        {/* Contenedor principal del formulario */}
-        <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-800 mb-8">
-            Registro de Nuevo Candidato
-          </h2>
+        <div style={{ background: 'white', padding: '32px', paddingTop: '24px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', border: '1px solid #E5E7EB' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '32px', fontFamily: 'Inter' }}>Registro de Nuevo Candidato</h2>
 
-          {message && (
-            <div className="mb-6 p-4 rounded-md text-sm font-medium bg-green-50 text-green-800 border border-green-200">
-              {message}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* SECCIÓN I. Datos Personales */}
-            <section>
-              <h3 className="text-base font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">
-                I. Datos Personales
-              </h3>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nombre Completo *
-                  </label>
-                  <input
-                    type="text"
-                    name="nombreCompleto"
-                    value={formData.nombreCompleto}
-                    onChange={handleChange}
-                    required
-                    placeholder="Nombres y Apellidos"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Identificación *
-                    </label>
-                    <input
-                      type="text"
-                      name="identificacion"
-                      value={formData.identificacion}
-                      onChange={handleChange}
-                      required
-                      placeholder="DNI 12345678A"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Fecha de Nacimiento *
-                    </label>
-                    <input
-                      type="date"
-                      name="fechaNacimiento"
-                      value={formData.fechaNacimiento}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Teléfono *
-                    </label>
-                    <input
-                      type="tel"
-                      name="telefono"
-                      value={formData.telefono}
-                      onChange={handleChange}
-                      required
-                      placeholder="+34 612 345 678"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Correo Electrónico *
-                    </label>
-                    <input
-                      type="email"
-                      name="correoElectronico"
-                      value={formData.correoElectronico}
-                      onChange={handleChange}
-                      required
-                      placeholder="correo@ejemplo.com"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Ciudad *
-                    </label>
-                    <input
-                      type="text"
-                      name="ciudad"
-                      value={formData.ciudad}
-                      onChange={handleChange}
-                      required
-                      placeholder="Madrid"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      País *
-                    </label>
-                    <input
-                      type="text"
-                      name="pais"
-                      value={formData.pais}
-                      onChange={handleChange}
-                      required
-                      placeholder="España"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    />
-                  </div>
-                </div>
+          <form onSubmit={handleSubmit}>
+            <FormSection title="I. Datos Personales">
+              <FormInput
+                label="Nombre Completo *"
+                placeholder="Nombres y Apellidos"
+                value={formData.nombre_completo}
+                onChange={handleInputChange}
+                name="nombre_completo" />
+              <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
+                <FormInput
+                  label="Identificación *"
+                  placeholder="12345678"
+                  width="50%"
+                  value={formData.cedula}
+                  onChange={handleInputChange}
+                  name="cedula" />
+                <FormInput label="Fecha de Nacimiento *"
+                  type="date"
+                  width="50%"
+                  value={formData.fecha_nacimiento}
+                  onChange={handleInputChange}
+                  name="fecha_nacimiento" />
               </div>
-            </section>
-
-            {/* SECCIÓN II. Perfil Profesional */}
-            <section>
-              <h3 className="text-base font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">
-                II. Perfil Profesional
-              </h3>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Área de Trabajo *
-                  </label>
-                  <select
-                    name="areaTrabajo"
-                    value={formData.areaTrabajo}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
-                  >
-                    <option value="" disabled>
-                      Seleccione un área
-                    </option>
-                    <option value="tecnologia">
-                      Tecnología de la Información
-                    </option>
-                    <option value="marketing">Marketing y Publicidad</option>
-                    <option value="finanzas">Finanzas y Contabilidad</option>
-                    <option value="rrhh">Recursos Humanos</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Especialidades *
-                  </label>
-                  <input
-                    type="text"
-                    name="especialidad"
-                    value={formData.especialidad}
-                    onChange={handleChange}
-                    required
-                    disabled={!formData.areaTrabajo}
-                    placeholder={
-                      formData.areaTrabajo
-                        ? "Ingrese sus especialidades"
-                        : "Primero seleccione un Área de trabajo"
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100 disabled:text-gray-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Disponibilidad
-                  </label>
-                  <select
-                    name="disponibilidad"
-                    value={formData.disponibilidad}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
-                  >
-                    <option value="Inmediata">Inmediata</option>
-                    <option value="15_dias">15 días</option>
-                    <option value="1_mes">1 mes</option>
-                    <option value="negociable">Negociable</option>
-                  </select>
-                </div>
+              <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
+                <FormInput label="Teléfono *"
+                  placeholder="+584121234567"
+                  width="50%"
+                  value={formData.telefono}
+                  onChange={handleInputChange}
+                  name="telefono" />
+                <FormInput label="Correo Electrónico *"
+                  type="email"
+                  placeholder="correo@ejemplo.com"
+                  width="50%"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  name="email" />
               </div>
-            </section>
-
-            {/* SECCIÓN III. Documentación y Aspiración Salarial */}
-            <section>
-              <h3 className="text-base font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">
-                III. Documentación y Aspiración Salarial
-              </h3>
-
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Expectativa Salarial *
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      name="expectativaSalarial"
-                      value={formData.expectativaSalarial}
-                      onChange={handleChange}
-                      required
-                      placeholder="35000"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    />
-                    <select
-                      name="moneda"
-                      value={formData.moneda}
-                      onChange={handleChange}
-                      className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
-                    >
-                      <option value="EUR">EUR</option>
-                      <option value="USD">USD</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Carga Documento Identidad */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Documento de Identidad
-                    </label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors relative">
-                      <input
-                        type="file"
-                        name="documentoIdentidad"
-                        onChange={handleFileChange}
-                        accept=".pdf,.jpg,.jpeg"
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      <svg
-                        className="w-8 h-8 text-gray-400 mb-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                        />
-                      </svg>
-                      <p className="text-sm text-gray-600 font-medium">
-                        {formData.documentoIdentidad
-                          ? formData.documentoIdentidad.name
-                          : "Arrastra el archivo aquí"}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        PDF o JPG (máx. 5MB)
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Carga Referencias Personales */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Referencias Personales
-                    </label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors relative">
-                      <input
-                        type="file"
-                        name="referenciasPersonales"
-                        onChange={handleFileChange}
-                        accept=".pdf,.jpg,.jpeg"
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      <svg
-                        className="w-8 h-8 text-gray-400 mb-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                        />
-                      </svg>
-                      <p className="text-sm text-gray-600 font-medium">
-                        {formData.referenciasPersonales
-                          ? formData.referenciasPersonales.name
-                          : "Arrastra el archivo aquí"}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        PDF o JPG (máx. 5MB)
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Checkbox de Políticas */}
-            <div className="pt-4 border-t border-gray-200">
-              <label className="flex items-start gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="aceptaPoliticas"
-                  checked={formData.aceptaPoliticas}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+              <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
+                <FormSelect
+                  label="País *"
+                  value={pais}
+                  onChange={(e) => {
+                    setPais(e.target.value);
+                    if (e.target.value !== 'Venezuela') setCiudad('');
+                  }}
+                  options={['Venezuela']}
+                  width="50%"
+                  defaultOption="Seleccione un país..."
                 />
-                <span className="text-sm text-gray-700">
-                  Acepto las políticas de privacidad y manejo de datos sensibles
-                  (LOPD) *
-                </span>
-              </label>
-            </div>
+
+                {pais === 'Venezuela' ? (
+                  <FormSelect
+                    label="Ciudad *"
+                    value={ciudad}
+                    onChange={(e) => setCiudad(e.target.value)}
+                    options={ciudadesVE}
+                    width="50%"
+                    defaultOption="Seleccione una ciudad..."
+                  />
+                ) : (
+                  <FormSelect
+                    label="Ciudad *"
+                    value=""
+                    onChange={() => { }}
+                    options={[]}
+                    width="50%"
+                    defaultOption="Seleccione un país primero..."
+                    disabled
+                  />
+                )}
+              </div>
+              <FormInput label="Dirección *"
+                placeholder="Direccion corta"
+                value={formData.direccion}
+                onChange={handleInputChange}
+                name="direccion" />
+            </FormSection>
+
+            <FormSection title="II. Perfil Profesional">
+              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {bloquesAreas.map((bloque, index) => {
+                  const especialidadesDelArea = especialidades.filter(e => e.area === parseInt(bloque.area));
+                  return (
+                    <div key={index} style={{ padding: '16px', border: '1px solid #E5E7EB', borderRadius: '8px', backgroundColor: '#FAFBFC' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+                        <label style={{ fontSize: '16px', fontWeight: '500' }}>Área de Trabajo {index + 1} *</label>
+                        {index > 0 && (
+                          <button type="button" onClick={() => eliminarBloque(index)} style={{ border: 'none', background: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
+                            Eliminar
+                          </button>
+                        )}
+                      </div>
+
+                      <select value={bloque.area} onChange={(e) => handleAreaChange(index, e.target.value)}
+                        style={{
+                          width: '100%', height: '42px', borderRadius: '8px', border: '1px solid #E5E7EB', outline: 'none', fontFamily: 'Inter', fontSize: '16px', marginBottom: '16px',
+                          color: bloque.area === '' ? '#6B7280' : '#1F2937'
+                        }}>
+                        <option value="">Seleccione un área...</option>
+                        {areas.map((area) => (
+                          <option key={area.id_area} value={area.id_area}>
+                            {area.nombre}
+                          </option>
+                        ))}
+                      </select>
+
+                      <label style={{ display: 'block', marginBottom: '8px', fontSize: '16px', fontWeight: '500' }}>Especialidades (Múltiple) *</label>
+                      <select multiple disabled={!bloque.area} value={bloque.especialidades} onChange={(e) => handleEspecialidadesChange(index, e.target.selectedOptions)}
+                        style={{
+                          width: '100%', minHeight: '100px', borderRadius: '8px', border: '1px solid #E5E7EB', outline: 'none', padding: '8px', fontFamily: 'Inter', fontSize: '14px',
+                          opacity: !bloque.area ? 0.6 : 1, cursor: !bloque.area ? 'not-allowed' : 'pointer',
+                          color: bloque.especialidades.length === 0 ? '#6B7280' : '#1F2937'
+                        }}>
+                        {especialidadesDelArea.length === 0 && <option value="" disabled>{bloque.area ? "No hay especialidades..." : "Primero seleccione un área"}</option>}
+                        {especialidadesDelArea.map((esp) => (
+                          <option key={esp.id_especialidad} value={esp.id_especialidad}>
+                            {esp.nombre}
+                          </option>
+                        ))}
+                      </select>
+                      <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>* Mantén presionado Ctrl (o Cmd en Mac) para elegir múltiples</p>
+                    </div>
+                  );
+                })}
+                <button type="button" onClick={agregarBloque} style={{ width: 'fit-content', padding: '8px 16px', borderRadius: '8px', border: '1px dashed #1A73E8', color: '#1A73E8', background: 'transparent', cursor: 'pointer', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  + Agregar Nueva Área
+                </button>
+              </div>
+              <FormSelect
+                label="Disponibilidad *"
+                value={disponibilidad}
+                onChange={(e) => setDisponibilidad(e.target.value)}
+                options={opcionesDisponibilidad}
+                width="100%"
+              />
+            </FormSection>
+
+            <FormSection title="III. Documentación y Aspiración">
+              <div style={{ display: 'flex', gap: '16px', width: '100%', alignItems: 'center' }}>
+                <FormInput
+                  label="Expectativa Salarial (Opcional)"
+                  type="number"
+                  placeholder="Ej: 800"
+                  value={salarial}
+                  onChange={(e) => setSalarial(e.target.value)}
+                  width="70%"
+                />
+                <FormSelect
+                  label="Moneda"
+                  value={moneda}
+                  onChange={(e) => setMoneda(e.target.value)}
+                  options={['USD', 'EUR']}
+                  width="30%"
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
+                <FileDropzone label="Documento de Identidad y Referencias Personales (Opcional)" helperText="PDF (máx. 10MB)" accept=".pdf" maxFiles={3} files={docsIdentidad} onChange={handleDocsIdentidadChange} />
+                <FileDropzone label="Curriculum Vitae *" helperText="PDF (máx. 10MB)" accept=".pdf" maxFiles={1} files={cv} onChange={handleCvChange} />
+              </div>
+            </FormSection>
 
             {/* Botones de Acción */}
-            <div className="flex justify-end gap-3 pt-6">
-              <button
-                type="button"
-                className="px-6 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                onClick={() => {
-                  /* Lógica para cancelar o resetear */
-                }}
-              >
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px', marginTop: '40px', paddingTop: '24px', borderTop: '1px solid #E5E7EB' }}>
+              <button type="button" onClick={onBack} style={{ padding: '12px 24px', borderRadius: '8px', border: '1px solid #E5E7EB', background: 'white', cursor: 'pointer', fontSize: '14px' }}>
                 Cancelar
               </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
-              >
-                {isSubmitting ? "Guardando..." : "Guardar Candidato"}
+              <button type="submit" style={{ padding: '12px 24px', borderRadius: '8px', background: '#1A73E8', color: 'white', border: 'none', cursor: 'pointer', fontWeight: '500', fontSize: '14px' }}>
+                Guardar Candidato
               </button>
             </div>
           </form>
@@ -445,4 +457,6 @@ export default function RegisterTalent({ onRegister, onBack }) {
       </div>
     </div>
   );
-}
+};
+
+export default RegisterTalent;

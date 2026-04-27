@@ -2,9 +2,7 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-    "./src/components/**/*.{js,ts,jsx,tsx}", // Añadimos esto para asegurar
-    "../src/**/*.{js,ts,jsx,tsx}", // Por si acaso el proceso corre desde un nivel distinto
+    "./src/**/*.{js,ts,jsx,tsx}", // Esta línea cubre TODO dentro de src, incluyendo componentes
   ],
   theme: {
     extend: {},

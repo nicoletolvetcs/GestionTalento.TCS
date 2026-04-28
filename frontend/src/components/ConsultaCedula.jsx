@@ -308,6 +308,20 @@ export default function ConsultaCedula() {
                 </span>
               </div>
               <div style={estilos.filaDato}>
+                <span style={estilos.labelDato}>Área(s) de Trabajo:</span>
+                <span style={estilos.valorDato}>
+                  {resultado.areas && resultado.areas.length > 0
+                    ? resultado.areas.join(', ')
+                    : 'No especificada'}
+                </span>
+              </div>
+              <div style={estilos.filaDato}>
+                <span style={estilos.labelDato}>Fecha de Aplicación:</span>
+                <span style={estilos.valorDato}>
+                  {resultado.fecha_aplicacion || 'No disponible'}
+                </span>
+              </div>
+              <div style={estilos.filaDato}>
                 <span style={estilos.labelDato}>Estatus Actual:</span>
                 <span style={{ ...estilos.valorDato, color: colorEstatus[resultado.estatus] || '#6B7280' }}>
                   {resultado.estatus}

@@ -13,11 +13,35 @@ from .models import Candidato
 
 class ConsultarEstatusCandidato(APIView):
     permission_classes = [permissions.AllowAny]
+
+    MESES_ES = {
+        'January': 'Enero', 'February': 'Febrero', 'March': 'Marzo',
+        'April': 'Abril', 'May': 'Mayo', 'June': 'Junio',
+        'July': 'Julio', 'August': 'Agosto', 'September': 'Septiembre',
+        'October': 'Octubre', 'November': 'Noviembre', 'December': 'Diciembre',
+    }
+
     def get(self, request, cedula):
         candidato = get_object_or_404(Candidato, cedula=cedula)
+
+        # Extraer las áreas únicas a través de las especialidades del candidato
+        areas = list(
+            candidato.especialidades.values_list('area__nombre', flat=True).distinct()
+        )
+
+        # Formatear fecha en español
+        fecha_es = None
+        if candidato.created_at:
+            fecha_raw = candidato.created_at.strftime("%d de %B de %Y")
+            for en, es in self.MESES_ES.items():
+                fecha_raw = fecha_raw.replace(en, es)
+            fecha_es = fecha_raw
+
         return Response({
             "nombre_completo": candidato.nombre_completo,
-            "estatus": candidato.estatus
+            "estatus": candidato.estatus,
+            "areas": areas,
+            "fecha_aplicacion": fecha_es,
         }, status=status.HTTP_200_OK)
 
 

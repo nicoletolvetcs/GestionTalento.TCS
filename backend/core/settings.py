@@ -41,7 +41,13 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'talento',
+    'rest_framework_simplejwt',
 ]
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',

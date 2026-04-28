@@ -5,7 +5,8 @@ import RegisterTalent from "./components/RegisterTalent";
 import TalentManagement from "./components/TalentManagment";
 import Interviews from "./components/InterviewForm";
 import PrintCard from "./components/PrintCard";
-import ConsultaEstado from "./components/ConsultaEstado";
+import ProtectedRoute from './components/ProtectedRoute';
+import ConsultaPublica from "./components/ConsultaCedula";
 
 
 
@@ -13,6 +14,8 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentPage, setCurrentPage] = useState("search");
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const rutaPublica = window.location.pathname === '/consulta-publica';
+
 
   const handleVerFicha = (candidato) => {
     setSelectedCandidate(candidato);
@@ -22,11 +25,17 @@ function App() {
     setSelectedCandidate(candidato);
     setCurrentPage("interviews");
   }
-  // 1. FUNCIÓN PARA CERRAR SESIÓN
+  // PARA CERRAR SESIÓN
   const handleLogout = () => {
     setIsAuthenticated(false); // Cambia el estado a no autenticado
     setCurrentPage("search"); // Resetea la página a la inicial
   };
+
+
+  // Validacion de ruta publica
+  if (rutaPublica) {
+    return <ConsultaPublica />;
+  }
 
   // Validación de entrada
   if (!isAuthenticated) {
@@ -46,17 +55,23 @@ function App() {
       </div>
 
       <main style={{ padding: "0px 0px 0px" }}>
-        {currentPage === "search" && <TalentManagement onVerFicha={handleVerFicha} onRellenarEntrevista={handleRellenarEntrevista} />}
-
+        {currentPage === "search" &&
+          <TalentManagement onVerFicha={handleVerFicha} onRellenarEntrevista={handleRellenarEntrevista} />}
         {currentPage === "register" && (
-          <RegisterTalent onBack={() => setCurrentPage("search")} onverFicha={handleVerFicha} />
+          <ProtectedRoute allowedRoles={['RRHH']}>
+            <RegisterTalent onBack={() => setCurrentPage("search")} onverFicha={handleVerFicha} />
+          </ProtectedRoute>
         )}
-        {currentPage === "interviews" && (<Interviews onBack={() => setCurrentPage("search")} onVerFicha={handleVerFicha} />)}
+        {currentPage === "interviews" &&
+          (<ProtectedRoute allowedRoles={['RRHH', 'Entrevistador']}>
+            <Interviews onBack={() => setCurrentPage("search")} onVerFicha={handleVerFicha} />
+          </ProtectedRoute>
+          )}
 
         {/* Ficha Reporte */}
         {currentPage === "report" && <PrintCard talentData={selectedCandidate} onBack={() => setCurrentPage("search")} onVerFicha={handleVerFicha} />}
 
-        {currentPage === "consulta" && <ConsultaEstado />}
+
       </main>
     </div>
   );

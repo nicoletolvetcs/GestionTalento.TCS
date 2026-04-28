@@ -78,12 +78,6 @@ const Navbar = ({ userName, userRole, activePage, onNavChange, onLogout }) => {
           icon={<FiClipboard />}
           onClick={() => onNavChange("interviews")}
         />
-        <NavButton
-          label="Consulta Estado"
-          active={activePage === "consulta"}
-          icon={<FiSearch />}
-          onClick={() => onNavChange("consulta")}
-        />
       </div>
 
       {/* Perfil de Usuario con Menú Desplegable */}
@@ -108,9 +102,9 @@ const Navbar = ({ userName, userRole, activePage, onNavChange, onLogout }) => {
           >
             {userName
               ? userName
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
               : "U"}
           </div>
           <FiChevronDown
@@ -118,7 +112,7 @@ const Navbar = ({ userName, userRole, activePage, onNavChange, onLogout }) => {
           />
         </div>
 
-        {/* Menú Desplegable Corregido */}
+        {/* Menú Desplegable */}
         {showUserMenu && (
           <div
             className="absolute top-[50px] right-[10px] bg-white rounded-xl shadow-xl py-2 w-48 z-50"

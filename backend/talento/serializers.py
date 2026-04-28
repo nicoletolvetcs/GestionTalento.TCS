@@ -47,3 +47,9 @@ class EntrevistaSerializer(serializers.ModelSerializer):
                 'observaciones', 'eligibilidad', 'puntuacion_tecnica', 
                 'puntuacion_comunicacion', 'puntuacion_interes', 
                 'justificacion_dictamen','created_at']
+    def validate (self,data):
+        user = self.context['request'].user
+        if user.group.filter(name='Entrevistador').exists():
+            if 'candidato' in data:
+                raise serializers.ValidationError("Los entrevistadores no pueden cambiar al candidato.")
+        return data

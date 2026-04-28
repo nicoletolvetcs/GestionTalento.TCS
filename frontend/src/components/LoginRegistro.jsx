@@ -1,20 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { FiLock, FiUser, FiEye, FiEyeOff } from "react-icons/fi";
 import { FaBuilding } from "react-icons/fa";
+import { AuthContext } from '../context/AuthContext';
 
 const LoginRegistro = ({ alEntrar }) => {
+  const {login} = useContext(AuthContext);
   const [identificador, setIdentificador] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const manejarLogin = (e) => {
+  const manejarLogin = async(e) => {
     e.preventDefault();
-    // Tu lógica de validación se mantiene intacta
-    if (identificador === "william" && password === "admin123") {
+    setError("Validando");
+
+    const resultado = await login(identificador, password);
+    if (resultado.success) {
       alEntrar();
     } else {
-      setError("ID de Reclutador o contraseña incorrectos");
+      setError("Username o contraseña incorrectos");
     }
   };
 

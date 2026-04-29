@@ -9,8 +9,29 @@ export default function ConsultaCedula() {
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
-    setCedula(e.target.value);
-    setError("");
+    let value = e.target.value.toUpperCase();
+    
+    // Regla 1: El primer carácter SOLO puede ser V o E
+    if (value.length === 1 && !['V', 'E'].includes(value)) {
+      setError("Debe iniciar con V o E (ej: V12345678).");
+      return; // Bloquea la escritura si no empieza con V o E
+    }
+
+    // Regla 2: Del segundo carácter en adelante, solo números
+    if (value.length > 1) {
+      const resto = value.slice(1).replace(/\D/g, ''); // Quitar todo lo que no sea número
+      value = value[0] + resto;
+    }
+
+    setCedula(value);
+    
+    // Limpiar mensaje de error o ponerlo si borraron la V/E y escriben otra cosa
+    if (value.length > 0 && !['V', 'E'].includes(value[0])) {
+      setError("Debe iniciar con V o E (ej: V12345678).");
+    } else {
+      setError("");
+    }
+
     // Limpiar resultado al escribir de nuevo para una mejor UX
     if (resultado) setResultado(null);
   };

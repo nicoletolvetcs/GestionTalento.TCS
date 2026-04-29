@@ -33,7 +33,9 @@ const FormSelect = ({ label, value, onChange, options, width = "100%", defaultOp
   </div>
 );
 
-const FormInput = ({label, placeholder, type = "text", value, onChange, width = "100%", disabled = false, readOnly = false, name}) => (
+const FormInput = ({ label, placeholder, type = "text", value, onChange,
+  width = "100%", disabled = false, readOnly = false,
+  name, error }) => (
   <div style={{ width, marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
     <label style={{ color: '#1F2937', fontSize: '14px', fontWeight: '500', fontFamily: 'Inter' }}>
       {label}
@@ -50,7 +52,7 @@ const FormInput = ({label, placeholder, type = "text", value, onChange, width = 
         height: '42px',
         padding: '0 16px',
         borderRadius: '8px',
-        border: '1px solid #E5E7EB',
+        border: error ? '1px solid #EF4444' : '1px solid #E5E7EB',
         fontSize: '16px',
         fontFamily: 'Inter',
         outline: 'none',
@@ -58,36 +60,41 @@ const FormInput = ({label, placeholder, type = "text", value, onChange, width = 
         color: disabled || readOnly ? '#6B7280' : 'inherit'
       }}
     />
+    {error && (
+      <span style={{ color: '#EF4444', fontSize: '12px', fontFamily: 'Inter' }}>
+        {error}
+      </span>
+    )}
   </div>
 );
 
-      const FormSection = ({title, children}) => (
-      <div
+const FormSection = ({ title, children }) => (
+  <div
+    style={{
+      alignSelf: "stretch",
+      display: "flex",
+      flexDirection: "column",
+      gap: "16px",
+      marginBottom: "32px",
+    }}
+  >
+    <div style={{ borderBottom: "1px solid #E5E7EB", paddingBottom: "8px" }}>
+      <h3
         style={{
-          alignSelf: "stretch",
-          display: "flex",
-          flexDirection: "column",
-          gap: "16px",
-          marginBottom: "32px",
+          color: "#1F2937",
+          fontSize: "18px",
+          fontWeight: "600",
+          fontFamily: "Inter",
+          margin: 0,
         }}
       >
-        <div style={{ borderBottom: "1px solid #E5E7EB", paddingBottom: "8px" }}>
-          <h3
-            style={{
-              color: "#1F2937",
-              fontSize: "18px",
-              fontWeight: "600",
-              fontFamily: "Inter",
-              margin: 0,
-            }}
-          >
-            {title}
-          </h3>
-        </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "16px" }}>
-          {children}
-        </div>
-      </div>
+        {title}
+      </h3>
+    </div>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "16px" }}>
+      {children}
+    </div>
+  </div>
 );
 
 const FileDropzone = ({ label, helperText, accept, maxFiles, files, onChange }) => (
@@ -122,31 +129,38 @@ const FileDropzone = ({ label, helperText, accept, maxFiles, files, onChange }) 
         </>
       )}
     </label>
-    </div>
-    );
+  </div>
+);
 
-    const RegisterTalent = ({onBack}) => {
+const RegisterTalent = ({ onBack }) => {
   const [formData, setFormData] = useState({
-      cedula: '',
+    cedula: '',
     nombre_completo: '',
     email: '',
-    telefono: '',
+    telefono: '+58',
     direccion: '',
     fecha_nacimiento: '',
   });
-    const [pais, setPais] = useState('');
-    const [ciudad, setCiudad] = useState('');
+  const [pais, setPais] = useState('');
+  const [ciudad, setCiudad] = useState('');
+  const [errors, setErrors] = useState({
+    nombre_completo: '',
+    telefono: '',
+    cedula: '',
+  });
+  const [erroresServidor, setErroresServidor] = useState({});
 
-    // Estado para la data cruda del backend
-    const [areas, setAreas] = useState([]);
-    const [especialidades, setEspecialidades] = useState([]);
 
-    // Estado para agregar multiples areas y especiliades a el candidato 
-    const [bloquesAreas, setBloquesAreas] = useState([
-    {area: '', especialidades: [] }
-    ]);
+  // Estado para la data cruda del backend
+  const [areas, setAreas] = useState([]);
+  const [especialidades, setEspecialidades] = useState([]);
+
+  // Estado para agregar multiples areas y especiliades a el candidato 
+  const [bloquesAreas, setBloquesAreas] = useState([
+    { area: '', especialidades: [] }
+  ]);
   const agregarBloque = () => {
-      setBloquesAreas([...bloquesAreas, { area: '', especialidades: [] }]);
+    setBloquesAreas([...bloquesAreas, { area: '', especialidades: [] }]);
   };
 
   const handleAreaChange = (index, value) => {
@@ -169,30 +183,30 @@ const FileDropzone = ({ label, helperText, accept, maxFiles, files, onChange }) 
     nuevosBloques.splice(index, 1);
     setBloquesAreas(nuevosBloques);
   };
-    //Estado para las expectativas salariales
-    const [salarial, setSalarial] = useState('');
-    // Estados para los Archivos
-    const [docsIdentidad, setDocsIdentidad] = useState([]); // Array de máx 3
-    const [cv, setCv] = useState(null); // Archivo único (máx 1)
+  //Estado para las expectativas salariales
+  const [salarial, setSalarial] = useState('');
+  // Estados para los Archivos
+  const [docsIdentidad, setDocsIdentidad] = useState([]); // Array de máx 3
+  const [cv, setCv] = useState(null); // Archivo único (máx 1)
 
-    const [disponibilidad, setDisponibilidad] = useState('');
-    const opcionesDisponibilidad = ['Inmediata',
+  const [disponibilidad, setDisponibilidad] = useState('');
+  const opcionesDisponibilidad = ['Inmediata',
     '15 días', '30 días', 'Remoto',
     'Presencial', 'Híbrido', 'Negociable'];
-    const [moneda, setMoneda] = useState('');
-    const opcionesMoneda = ['USD', 'EUR'];
+  const [moneda, setMoneda] = useState('');
+  const opcionesMoneda = ['USD', 'EUR'];
 
   useEffect(() => {
     const cargarDatosIniciales = async () => {
       try {
         const [resAreas, resEspec] = await Promise.all([
-    api.get('areas/'),
-    api.get('especialidades/')
-    ]);
-    setAreas(resAreas.data);
-    setEspecialidades(resEspec.data);
+          api.get('areas/'),
+          api.get('especialidades/')
+        ]);
+        setAreas(resAreas.data);
+        setEspecialidades(resEspec.data);
       } catch (error) {
-      console.error("Error al cargar filtros:", error);
+        console.error("Error al cargar filtros:", error);
       }
     };
     cargarDatosIniciales();
@@ -206,7 +220,7 @@ const FileDropzone = ({ label, helperText, accept, maxFiles, files, onChange }) 
     const choosenFiles = Array.from(e.target.files);
     if (choosenFiles.length > 3) {
       alert("Solamente puedes subir un máximo de 3 archivos en esta sección.");
-    setDocsIdentidad(choosenFiles.slice(0, 3));
+      setDocsIdentidad(choosenFiles.slice(0, 3));
     } else {
       setDocsIdentidad(choosenFiles);
     }
@@ -215,22 +229,94 @@ const FileDropzone = ({ label, helperText, accept, maxFiles, files, onChange }) 
     const choosenFile = Array.from(e.target.files);
     if (choosenFile.length > 1) {
       alert("Solamente puedes subir un archivo en esta sección.");
-    setCv(choosenFile.slice(0, 1));
+      setCv(choosenFile.slice(0, 1));
     } else {
       setCv(choosenFile);
     }
   };
 
   const handleInputChange = (e) => {
-      setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+    const { name, value } = e.target;
 
+    // --- Validacion de Nombre Completo ---
+    if (name === 'nombre_completo') {
+      // Rechazamos cualquier caracter que sea numero
+      const sinNumeros = value.replace(/[0-9]/g, '');
+      // Transformamos las primeras letras de cada palabra a mayuscula
+      const formatoNombre = sinNumeros.replace(/\b\w/g, (char) => char.toUpperCase());
+      // Actualizamos estado y establecemos errores
+      setFormData({ ...formData, [name]: formatoNombre });
+      setErrors({
+        ...errors,
+        nombre_completo: /[0-9]/.test(value) ? 'El nombre no puede contener números.' : '',
+      });
+      return; // salimos aquí para no caer al setFormData genérico
+    }
+
+    // --- Validacion de Cedula ---
+    if (name === 'cedula') {
+      let nuevaVal = value.toUpperCase(); // Forzar mayúscula
+
+      // Regla 1: El primer carácter SOLO puede ser V o E
+      if (nuevaVal.length === 1 && !['V', 'E'].includes(nuevaVal)) {
+        setErrors({ ...errors, cedula: 'Debe iniciar con V o E.' });
+        return; // No actualiza el estado, bloquea la escritura
+      }
+
+      // Regla 2: Del segundo carácter en adelante, solo números
+      if (nuevaVal.length > 1) {
+        const resto = nuevaVal.slice(1).replace(/\D/g, ''); // Quitar no-numéricos
+        nuevaVal = nuevaVal[0] + resto;
+      }
+
+      setFormData({ ...formData, [name]: nuevaVal });
+      setErrors({
+        ...errors,
+        cedula: nuevaVal.length > 0 && !['V', 'E'].includes(nuevaVal[0])
+          ? 'Debe iniciar con V o E.'
+          : '',
+      });
+      return;
+    }
+
+    // --- Validacion de telefono ---
+    if (name === 'telefono') {
+      let tel = value;
+      const prefijo = '+58 ';
+
+      // asegurar que siempre empiece con +58
+      if (!tel.startsWith(prefijo)) {
+        tel = prefijo; // Si intenta borrar el prefijo, se restaura
+      }
+
+      // Solo permitir numeros despues del prefijo 
+      const parteUsuario = tel.slice(prefijo.length).replace(/\D/g, '');
+      tel = prefijo + parteUsuario;
+
+      // Validamos el patron completo +58 4XX XXXXXXX
+      const telefonoLimpio = parteUsuario;
+      let msgError = '';
+      if (telefonoLimpio.length > 0 && telefonoLimpio[0] !== '4') {
+        msgError = 'Despues de +58, el numero debe empezar con 4';
+      }
+      else if (telefonoLimpio.length > 10) {
+        msgError = 'El número no puede exceder 10 dígitos.';
+        tel = prefijo + parteUsuario.slice(0, 10); // Truncamos el numero excedente 
+      }
+      setFormData({ ...formData, [name]: tel });
+      setErrors({ ...errors, telefono: msgError });
+      return;
+    }
+
+    // --- Demás campos ---
+    setFormData({ ...formData, [name]: value });
+  };
   const handleSubmit = async (e) => {
-      e.preventDefault(); // Evita que la página se reinicie
+    e.preventDefault(); // Evita que la página se reinicie
 
     const pack = new FormData();
 
-    // 1. Agregamos los campos de texto
+    // Agregamos los campos de texto
     pack.append('cedula', formData.cedula);
     pack.append('nombre_completo', formData.nombre_completo);
     pack.append('email', formData.email);
@@ -240,7 +326,7 @@ const FileDropzone = ({ label, helperText, accept, maxFiles, files, onChange }) 
     pack.append('pais', pais);
     pack.append('ciudad', ciudad);
 
-    // 3. Agregamos las áreas y especialidades
+    //  Agregamos las áreas y especialidades
     bloquesAreas.forEach(bloque => {
       bloque.especialidades.forEach(espId => {
         // Django automáticamente tomará esto como la lista M2M (Muchas a Muchas)
@@ -250,11 +336,11 @@ const FileDropzone = ({ label, helperText, accept, maxFiles, files, onChange }) 
 
     if (salarial) {
       pack.append('aspiracion_salarial', salarial);
-    pack.append('moneda', moneda);
+      pack.append('moneda', moneda);
     }
     if (disponibilidad) pack.append('disponibilidad', disponibilidad);
 
-    // 2. Agregamos los archivos
+    //  Agregamos los archivos
     if (docsIdentidad.length > 0) {
       pack.append('url_documento_id', docsIdentidad[0]);
     }
@@ -263,23 +349,23 @@ const FileDropzone = ({ label, helperText, accept, maxFiles, files, onChange }) 
       pack.append('url_referencias', cv[0]);
     }
 
-    // 4. Agregamos el estatus por defecto
+    //  Agregamos el estatus por defecto
     pack.append('estatus', 'Pendiente');
 
     try {
       const respuesta = await api.post('candidatos/', pack, {
-      headers: {'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-    alert("Candidato registrado como un éxito!");
+      alert("Candidato registrado como un éxito!");
     } catch (error) {
       console.error("Detalle del error:", error.response?.data || error);
-    const errorMsg = error.response?.data
-    ? JSON.stringify(error.response.data, null, 2)
-    : "Revisa si faltaron datos obligatorios.";
-    alert("Falló la creación. El servidor dice:\n\n" + errorMsg);
+      const errorMsg = error.response?.data
+        ? JSON.stringify(error.response.data, null, 2)
+        : "Revisa si faltaron datos obligatorios.";
+      alert("Falló la creación. El servidor dice:\n\n" + errorMsg);
     }
   };
-    return (
+  return (
     <div
       style={{
         backgroundColor: "rgb(243, 244, 246)",
@@ -349,7 +435,9 @@ const FileDropzone = ({ label, helperText, accept, maxFiles, files, onChange }) 
                 placeholder="Nombres y Apellidos"
                 value={formData.nombre_completo}
                 onChange={handleInputChange}
-                name="nombre_completo" />
+                name="nombre_completo"
+                error={errors.nombre_completo}
+              />
               <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
                 <FormInput
                   label="Identificación *"
@@ -357,7 +445,9 @@ const FileDropzone = ({ label, helperText, accept, maxFiles, files, onChange }) 
                   width="50%"
                   value={formData.cedula}
                   onChange={handleInputChange}
-                  name="cedula" />
+                  name="cedula"
+                  error={errors.cedula}
+                />
                 <FormInput label="Fecha de Nacimiento *"
                   type="date"
                   width="50%"
@@ -371,7 +461,9 @@ const FileDropzone = ({ label, helperText, accept, maxFiles, files, onChange }) 
                   width="50%"
                   value={formData.telefono}
                   onChange={handleInputChange}
-                  name="telefono" />
+                  name="telefono"
+                  error={errors.telefono}
+                />
                 <FormInput label="Correo Electrónico *"
                   type="email"
                   placeholder="correo@ejemplo.com"
@@ -517,7 +609,7 @@ const FileDropzone = ({ label, helperText, accept, maxFiles, files, onChange }) 
         </div>
       </div>
     </div>
-    );
+  );
 };
 
-    export default RegisterTalent;
+export default RegisterTalent;

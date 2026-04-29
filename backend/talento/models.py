@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import EmailValidator, MinValueValidator, MaxValueValidator
+from django.core.validators import EmailValidator, MinValueValidator, MaxValueValidator, RegexValidator
 from django_countries import countries
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
@@ -58,11 +58,20 @@ class Candidato(models.Model):
         EUR = 'EUR', 'EUR'
 
     id_candidato = models.AutoField(primary_key=True, db_column='id_candidato')
-    cedula = models.CharField(max_length=100, unique=True, db_column='numero_identificacion')
+    cedula = models.CharField(max_length=100, unique=True, db_column='numero_identificacion', validators=[RegexValidator(
+            regex=r'^[VE]\d{6,9}$',
+            message='La identificación debe comenzar con V o E seguido de 6 a 9 dígitos.'
+        )])
     fecha_nacimiento = models.DateField(null=True, blank=True)
-    nombre_completo = models.CharField(max_length=150)
+    nombre_completo = models.CharField(max_length=150, validators=[RegexValidator(
+            regex=r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$',
+            message='El nombre solo puede contener letras y espacios.'
+        )])
     email = models.EmailField(max_length=150, unique=True, validators=[EmailValidator(message="Ingresa un correo electrónico válido.")])
-    telefono = models.CharField(max_length=50)
+    telefono = models.CharField(max_length=50, validators=[RegexValidator(
+            regex=r'^\+58\s4\d{9}$',
+            message='El teléfono debe tener el formato +58 4XX XXXXXXX.'
+        )])
     ciudad = models.CharField(max_length=100, blank=True)
     pais = models.CharField(max_length=100, choices=CHOICES_PAISES,default='Venezuela')
     disponibilidad = models.CharField(max_length=100, blank=True)

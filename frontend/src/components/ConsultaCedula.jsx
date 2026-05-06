@@ -1,60 +1,71 @@
 import { useState } from "react";
-import { FiSearch, FiClock, FiCheckCircle } from "react-icons/fi"; // FiCheckCircle para el badge de entrevistas
+import { FiSearch, FiClock, FiCheckCircle } from "react-icons/fi";
+import axios from 'axios';
 
-export default function ConsultaEstado() {
+export default function ConsultaCedula() {
   const [cedula, setCedula] = useState("");
   const [resultado, setResultado] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
-    setCedula(e.target.value);
-    setError("");
+    let value = e.target.value.toUpperCase();
+    
+    // Regla 1: El primer carácter SOLO puede ser V o E
+    if (value.length === 1 && !['V', 'E'].includes(value)) {
+      setError("Debe iniciar con V o E (ej: V12345678).");
+      return; // Bloquea la escritura si no empieza con V o E
+    }
+
+    // Regla 2: Del segundo carácter en adelante, solo números
+    if (value.length > 1) {
+      const resto = value.slice(1).replace(/\D/g, ''); // Quitar todo lo que no sea número
+      value = value[0] + resto;
+    }
+
+    setCedula(value);
+    
+    // Limpiar mensaje de error o ponerlo si borraron la V/E y escriben otra cosa
+    if (value.length > 0 && !['V', 'E'].includes(value[0])) {
+      setError("Debe iniciar con V o E (ej: V12345678).");
+    } else {
+      setError("");
+    }
+
     // Limpiar resultado al escribir de nuevo para una mejor UX
     if (resultado) setResultado(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (cedula.length < 4) {
+      setError("Por favor ingresa un número de cédula válido.");
+      return;
+    }
     setLoading(true);
     setResultado(null);
     setError("");
 
-    // Simulación de consulta, reemplazar con llamada real a API
-    setTimeout(() => {
-      // Usamos una cédula de prueba específica para mostrar los datos de la imagen
-      if (cedula === "9876543210") {
-        setResultado({
-          estado: "En Revisión",
-          mensaje:
-            "Tu perfil está siendo revisado por nuestro equipo de reclutamiento.",
-          datosAplicacion: {
-            nombreCompleto: "María López Fernández",
-            posicionAplicada: "Fábrica de Software",
-            area: "Tecnología",
-            fechaAplicacion: "14 de marzo de 2026",
-            ultimaActualizacion: "9 de abril de 2026",
-          },
-          entrevistas: [
-            {
-              area: "Ventas",
-              fecha: "9 de abril de 2026, 10:00 a. m.",
-              completada: true,
-            },
-          ],
-        });
-      } else if (cedula.length < 6) {
-        setError("Por favor ingresa un número de cédula válido.");
+    try {
+      const res = await axios.get(`http://localhost:8000/api/consultar-estado/${cedula}/`);
+      setResultado(res.data);
+    } catch (err) {
+      if (err.response && err.response.status === 404) {
+        setError("No se encontró ningún candidato con esa identificación.");
       } else {
-        // Estado por defecto para otras cédulas válidas
-        setResultado({
-          estado: "Pendiente",
-          mensaje:
-            "Tu solicitud ha sido recibida y está en cola para revisión.",
-        });
+        setError("Ocurrió un error al consultar. Intente más tarde.");
       }
-      setLoading(false);
-    }, 1500); // Un poco más de tiempo para apreciar el spinner pro
+    }
+    setLoading(false);
+  };
+
+  // Mapeo de colores según el estatus
+  const colorEstatus = {
+    'Elegible': '#22C55E',
+    'En Revisión': '#F97316',
+    'En Cartera': '#3B82F6',
+    'No Elegible': '#EF4444',
+    'Pendiente': '#6B7280',
   };
 
   const estilos = {
@@ -162,10 +173,9 @@ export default function ConsultaEstado() {
       borderRadius: "6px",
       border: "1px solid #fee2e2",
     },
-    // ESTILOS SECCIÓN RESULTADOS (NUEVOS, BASADOS EN TU IMAGEN)
+    // ESTILOS SECCIÓN RESULTADOS
     iconoEstado: {
       fontSize: "48px",
-      color: "#F97316", // Naranja para 'En Revisión'
       marginBottom: "16px",
     },
     textoEstadoHeader: {
@@ -183,7 +193,7 @@ export default function ConsultaEstado() {
     },
     seccionDatos: {
       width: "100%",
-      background: "#F0F9FF", // Azul muy suave, igual que en tu imagen
+      background: "#F0F9FF", // Azul muy suave
       border: "1px solid #BAE6FD",
       borderRadius: "12px",
       padding: "24px",
@@ -212,32 +222,6 @@ export default function ConsultaEstado() {
       fontWeight: "600",
       textAlign: "right",
     },
-    seccionEntrevistas: {
-      width: "100%",
-      marginBottom: "24px",
-    },
-    tarjetaEntrevista: {
-      width: "100%",
-      background: "#ffffff",
-      border: "1px solid #E5E7EB",
-      borderRadius: "10px",
-      padding: "16px 20px",
-      boxSizing: "border-box",
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-    },
-    badgeCompletada: {
-      background: "#DCFCE7", // Verde suave
-      color: "#166534",
-      fontSize: "12px",
-      fontWeight: "600",
-      padding: "4px 10px",
-      borderRadius: "999px",
-      display: "flex",
-      alignItems: "center",
-      gap: "4px",
-    },
     notaFinal: {
       width: "100%",
       background: "#F0F9FF",
@@ -249,6 +233,22 @@ export default function ConsultaEstado() {
       color: "#075985",
       lineHeight: "1.5",
     },
+  };
+
+  // Mensaje amigable según el estatus
+  const getMensajeEstatus = (estatus) => {
+    switch (estatus) {
+      case 'Elegible':
+        return 'Felicidades! Has sido seleccionado(a) como candidato elegible.';
+      case 'En Revisión':
+        return 'Tu perfil está siendo revisado por nuestro equipo de reclutamiento.';
+      case 'En Cartera':
+        return 'Tu perfil ha sido guardado en nuestra cartera de talentos para futuras oportunidades.';
+      case 'No Elegible':
+        return 'Lamentablemente, tu perfil no cumple con los requisitos para esta posición en este momento.';
+      default:
+        return 'Tu solicitud ha sido recibida y está en cola para revisión.';
+    }
   };
 
   return (
@@ -267,7 +267,7 @@ export default function ConsultaEstado() {
             <input
               type="text"
               style={estilos.input}
-              placeholder="Ej: 9876543210 (para prueba)"
+              placeholder="Ej: V-12345678"
               value={cedula}
               onChange={handleChange}
               disabled={loading}
@@ -284,7 +284,6 @@ export default function ConsultaEstado() {
               disabled={loading}
             >
               {loading ? (
-                // Reutilizamos el spinner del resto del código si existe, sino texto
                 <span>🌀</span>
               ) : (
                 <FiSearch style={{ fontSize: "18px" }} />
@@ -297,7 +296,7 @@ export default function ConsultaEstado() {
         </div>
       </div>
 
-      {/* DESPLEGABLE DE RESULTADOS (DATOS DE TU IMAGEN) */}
+      {/* DESPLEGABLE DE RESULTADOS CON DATOS REALES DE LA API */}
       {resultado && (
         <div
           style={{
@@ -307,113 +306,48 @@ export default function ConsultaEstado() {
             boxShadow: "none",
           }}
         >
-          {" "}
-          {/* Reutilizamos wrapper para max-width y centrado */}
           <div style={estilos.tarjetaResultados}>
             {/* Header de Estado */}
-            <div style={estilos.iconoEstado}>
-              <FiClock />
+            <div style={{ ...estilos.iconoEstado, color: colorEstatus[resultado.estatus] || '#6B7280' }}>
+              {resultado.estatus === 'Elegible' ? <FiCheckCircle /> : <FiClock />}
             </div>
-            <h3 style={estilos.textoEstadoHeader}>En Revisión</h3>
+            <h3 style={estilos.textoEstadoHeader}>{resultado.estatus}</h3>
             <p style={estilos.textoMensajeEstado}>
-              Tu perfil está siendo revisado por nuestro equipo de
-              reclutamiento.
+              {getMensajeEstatus(resultado.estatus)}
             </p>
 
             {/* Sección de Datos de la Aplicación (Caja azul) */}
-            {resultado.datosAplicacion && (
-              <div style={estilos.seccionDatos}>
-                <h4 style={estilos.tituloSeccion}>
-                  Información de tu Aplicación
-                </h4>
-
-                <div style={estilos.filaDato}>
-                  <span style={estilos.labelDato}>Nombre Completo:</span>
-                  <span style={estilos.valorDato}>
-                    {resultado.datosAplicacion.nombreCompleto}
-                  </span>
-                </div>
-                <div style={estilos.filaDato}>
-                  <span style={estilos.labelDato}>Posición Aplicada:</span>
-                  <span style={estilos.valorDato}>
-                    {resultado.datosAplicacion.posicionAplicada}
-                  </span>
-                </div>
-                <div style={estilos.filaDato}>
-                  <span style={estilos.labelDato}>Área:</span>
-                  <span style={estilos.valorDato}>
-                    {resultado.datosAplicacion.area}
-                  </span>
-                </div>
-                <div style={estilos.filaDato}>
-                  <span style={estilos.labelDato}>Fecha de Aplicación:</span>
-                  <span style={estilos.valorDato}>
-                    {resultado.datosAplicacion.fechaAplicacion}
-                  </span>
-                </div>
-                <div style={estilos.filaDato}>
-                  <span style={estilos.labelDato}>Última Actualización:</span>
-                  <span style={estilos.valorDato}>
-                    {resultado.datosAplicacion.ultimaActualizacion}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Sección de Entrevistas */}
-            <div style={estilos.seccionEntrevistas}>
-              <h4
-                style={{
-                  ...estilos.tituloSeccion,
-                  color: "#1F2937",
-                  marginBottom: "16px",
-                }}
-              >
-                Entrevistas
+            <div style={estilos.seccionDatos}>
+              <h4 style={estilos.tituloSeccion}>
+                Información del Candidato
               </h4>
 
-              {resultado.entrevistas && resultado.entrevistas.length > 0 ? (
-                resultado.entrevistas.map((entrevista, index) => (
-                  <div key={index} style={estilos.tarjetaEntrevista}>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "4px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "14px",
-                          fontWeight: "600",
-                          color: "#1F2937",
-                        }}
-                      >
-                        Área: {entrevista.area}
-                      </div>
-                      <div style={{ fontSize: "13px", color: "#6B7280" }}>
-                        Fecha: {entrevista.fecha}
-                      </div>
-                    </div>
-                    {entrevista.completada && (
-                      <div style={estilos.badgeCompletada}>
-                        <FiCheckCircle /> Completada
-                      </div>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <p
-                  style={{
-                    fontSize: "14px",
-                    color: "#6B7280",
-                    fontStyle: "italic",
-                    textAlign: "center",
-                  }}
-                >
-                  No hay entrevistas programadas.
-                </p>
-              )}
+              <div style={estilos.filaDato}>
+                <span style={estilos.labelDato}>Nombre Completo:</span>
+                <span style={estilos.valorDato}>
+                  {resultado.nombre_completo}
+                </span>
+              </div>
+              <div style={estilos.filaDato}>
+                <span style={estilos.labelDato}>Área(s) de Trabajo:</span>
+                <span style={estilos.valorDato}>
+                  {resultado.areas && resultado.areas.length > 0
+                    ? resultado.areas.join(', ')
+                    : 'No especificada'}
+                </span>
+              </div>
+              <div style={estilos.filaDato}>
+                <span style={estilos.labelDato}>Fecha de Aplicación:</span>
+                <span style={estilos.valorDato}>
+                  {resultado.fecha_aplicacion || 'No disponible'}
+                </span>
+              </div>
+              <div style={estilos.filaDato}>
+                <span style={estilos.labelDato}>Estatus Actual:</span>
+                <span style={{ ...estilos.valorDato, color: colorEstatus[resultado.estatus] || '#6B7280' }}>
+                  {resultado.estatus}
+                </span>
+              </div>
             </div>
 
             {/* Nota Final */}

@@ -1,6 +1,69 @@
-from rest_framework import viewsets
-from .models import Area, Especialidad, Candidato, Entrevista
-from .serializers import AreaSerializer, EspecialidadSerializer, CandidatoSerializer, EntrevistaSerializer
+from rest_framework import viewsets, permissions
+from .models import Area, Especialidad, Candidato, Entrevista, Contratacion
+from .serializers import AreaSerializer, EspecialidadSerializer, CandidatoSerializer, EntrevistaSerializer, ContratacionSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import permissions, status
+from django.shortcuts import get_object_or_404
+from .models import Candidato
+
+
+class ConsultarEstatusCandidato(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    MESES_ES = {
+        'January': 'Enero', 'February': 'Febrero', 'March': 'Marzo',
+        'April': 'Abril', 'May': 'Mayo', 'June': 'Junio',
+        'July': 'Julio', 'August': 'Agosto', 'September': 'Septiembre',
+        'October': 'Octubre', 'November': 'Noviembre', 'December': 'Diciembre',
+    }
+
+    def get(self, request, cedula):
+        candidato = get_object_or_404(Candidato, cedula=cedula)
+
+        # Extraer las áreas únicas a través de las especialidades del candidato
+        areas = list(
+            candidato.especialidades.values_list('area__nombre', flat=True).distinct()
+        )
+
+        # Formatear fecha en español
+        fecha_es = None
+        if candidato.created_at:
+            fecha_raw = candidato.created_at.strftime("%d de %B de %Y")
+            for en, es in self.MESES_ES.items():
+                fecha_raw = fecha_raw.replace(en, es)
+            fecha_es = fecha_raw
+
+        return Response({
+            "nombre_completo": candidato.nombre_completo,
+            "estatus": candidato.estatus,
+            "areas": areas,
+            "fecha_aplicacion": fecha_es,
+        }, status=status.HTTP_200_OK)
+
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        
+        # Extraemos información de self.user
+        data['nombre_completo'] = f"{self.user.first_name} {self.user.last_name}"
+        data['username'] = self.user.username
+        
+        # Determinamos el rol basado en el grupo 
+        # Asegurase de que en el admin se llamen RRHH y Entrevistador CHEQUEARRR
+        grupo = self.user.groups.first()
+        data['rol'] = grupo.name if grupo else 'Sin Rol'
+        
+        return data
+
+
+class CustomLoginView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 class AreaViewSet(viewsets.ModelViewSet):
     queryset = Area.objects.all()
@@ -44,3 +107,79 @@ class CandidatoViewSet(viewsets.ModelViewSet):
 class EntrevistaViewSet(viewsets.ModelViewSet):
     queryset = Entrevista.objects.all()
     serializer_class = EntrevistaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        user = self.request.user
+        grupo = user.group.first()
+
+        # Si el usuario es parte del grupo entrevistadores, solo puede ver los candidatos asignados a el. 
+        if grupo and grupo.name == 'RRHH':
+           return Entrevista.objects.all().order_by('-created_at')
+        elif grupo and grupo.name == 'Entrevistador':
+            return Entrevista.objects.filter(entrevistador=user).order_by('-created_at')
+        else:
+            return Entrevista.objects.none()
+        
+        # Filtro por candidato
+        candidato_id = self.request.query_params.get('candidato')
+        if candidato_id is not None:
+            queryset = queryset.filter(candidato_id=candidato_id)
+        return queryset
+   
+    def perform_create(self, serializer):
+        grupo = self.request.user.group.first()
+        if not grupo and grupo.name != "RRHH":
+            raise PermissionDenied("Acceso Denegado: Solo el personal de RR.HH. puede agendar y crear entrevistas.")
+        serializer.save()
+
+class RegistrarCandidatoPublico(APIView):
+    """
+    Endpoint público: permite que cualquier persona se registre como candidato
+    sin necesidad de estar autenticada.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        # Inyectamos el estatus por defecto (el público NO puede elegirlo)
+        data = request.data.copy()
+        data['estatus'] = 'Pendiente'
+
+        # Honeypot: si el campo oculto "website" viene con datos, es un bot
+        if data.get('website', ''):
+            # Simulamos éxito para que el bot crea que funcionó
+            return Response(
+                {"mensaje": "Registro exitoso."},
+                status=status.HTTP_201_CREATED
+            )
+
+        serializer = CandidatoSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"mensaje": "¡Tu registro fue exitoso! Tu solicitud está en estatus Pendiente."},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ContratacionViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestionar contrataciones.
+    Solo RRHH puede crear/modificar registros de contratación.
+    """
+    queryset = Contratacion.objects.all()
+    serializer_class = ContratacionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        """
+        1. Verifica que el usuario sea del grupo RRHH
+        2. Inyecta automáticamente el usuario que procesa la contratación
+        """
+        grupo = self.request.user.groups.first()
+        if not grupo or grupo.name != 'RRHH':
+            raise PermissionDenied(
+                "Acceso Denegado: Solo el personal de RR.HH. puede procesar contrataciones."
+            )
+        serializer.save(procesado_por=self.request.user)

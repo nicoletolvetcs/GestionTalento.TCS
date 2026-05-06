@@ -1,28 +1,88 @@
-import React, { useState } from "react";
-import { FiChevronLeft, FiStar } from "react-icons/fi";
+import React, { useState, useEffect } from "react";
+import { FiStar } from "react-icons/fi";
+import { FaArrowLeft, FaRegCheckCircle, FaFolderOpen } from "react-icons/fa";
+import { FaUserClock } from "react-icons/fa";
+import { IoMdCloseCircle } from "react-icons/io";
+
 import api from "../api";
 
-const InterviewForm = ({ onBack }) => {
+const InterviewForm = ({ onBack, onVerFicha }) => {
   const [selectedCandidate, setSelectedCandidate] = useState("");
   const [dictamen, setDictamen] = useState("");
+  const [observaciones, setObservaciones] = useState("");
+  const [justificacion, setJustificacion] = useState("");
+  const [candidatosLista, setCandidatosLista] = useState([]);
   const [ratings, setRatings] = useState({
-    tecnica: 0,
-    comunicacion: 0,
-    interes: 0,
+    tecnica: 1,
+    comunicacion: 1,
+    interes: 1,
   });
 
-  // Datos simulados para el ejemplo
-  const candidateInfo =
-    selectedCandidate === "1"
-      ? {
-          nombre: "Laura Gómez Martin",
-          rol: "Diseño UI/UX",
-          detalles: ["Diseño de interfaces", "Prototipado"],
-          entrevistador: "Carlos Ruiz",
-          area: "Desarrollo Web",
-          fecha: "16/4/2026",
-        }
-      : null;
+  useEffect(() => {
+    api.get("candidatos/")
+      .then((response) => {
+        const data = response.data.results ? response.data.results : response.data;
+        // Filtrar validando que el candidato siga en estatus "Pendiente" (No ha sido entrevistado)
+        const candidatosPendientes = data.filter(c => c.estatus === "Pendiente");
+        setCandidatosLista(candidatosPendientes);
+      })
+      .catch((err) => console.error("Error al cargar candidatos:", err));
+  }, []);
+
+  // Mappeo de los datos 
+  const candidatoSeleccionado = candidatosLista.find(
+    (c) => c.id_candidato.toString() === selectedCandidate
+  );
+
+  const candidatoInfo = candidatoSeleccionado
+    ? {
+      nombre: candidatoSeleccionado.nombre_completo,
+      rol: candidatoSeleccionado.area_nombre || "Área General",
+      cedula: candidatoSeleccionado.cedula,
+      telefono: candidatoSeleccionado.telefono,
+      direccion: candidatoSeleccionado.direccion,
+      ubicacion: `${candidatoSeleccionado.ciudad}, ${candidatoSeleccionado.pais}`,
+      aspiracion: `${candidatoSeleccionado.aspiracion_salarial} ${candidatoSeleccionado.moneda}`,
+      disponibilidad: candidatoSeleccionado.disponibilidad,
+      detalles: candidatoSeleccionado.especialidades_detalle?.map(e => e.nombre) || [],
+      entrevistador: "Recursos Humanos",
+      area: candidatoSeleccionado.area_nombre || "No definida",
+      fecha: new Date().toLocaleDateString(),
+    }
+    : null;
+
+  const handleSubmit = async () => {
+    if (!selectedCandidate || !dictamen) {
+      alert("Por favor seleccione un candidato y aplique un dictamen final (Elegible, etc.)");
+      return;
+    }
+
+    if (!observaciones.trim()) {
+      alert("Por favor escriba las observaciones de la entrevista.");
+      return;
+    }
+
+    const payload = {
+      candidato: parseInt(selectedCandidate),
+      entrevistador: null,
+      fecha_entrevista: new Date().toISOString(),
+      observaciones: observaciones,
+      eligibilidad: dictamen,
+      puntuacion_tecnica: ratings.tecnica,
+      puntuacion_comunicacion: ratings.comunicacion,
+      puntuacion_interes: ratings.interes,
+      justificacion_dictamen: justificacion
+    };
+
+    try {
+      await api.post('entrevistas/', payload);
+      alert("¡Entrevista guardada exitosamente!");
+      if (onBack) onBack();
+    } catch (error) {
+      console.error("Fallo al guardar:", error.response?.data || error);
+      alert("Hubo un error al guardar. Revisa la consola.");
+    }
+  };
 
   const StarRating = ({ label, category }) => (
     <div style={styles.ratingRow}>
@@ -44,128 +104,203 @@ const InterviewForm = ({ onBack }) => {
   );
 
   return (
-    <div style={styles.container}>
-      <button onClick={onBack} style={styles.backButton}>
-        <FiChevronLeft /> Volver a Búsqueda
-      </button>
+    <div style={styles.pageWrapper}>
+      <div style={styles.container}>
+        <button onClick={onBack} style={styles.backButton}>
+          <FaArrowLeft /> Volver a Búsqueda
+        </button>
 
-      <div style={styles.card}>
-        <h2 style={styles.title}>Registro de Entrevista</h2>
+        <div style={styles.card}>
+          <h2 style={styles.title}>Registro de Entrevista</h2>
 
-        <label style={styles.label}>Seleccionar Candidato *</label>
-        <select
-          style={styles.select}
-          value={selectedCandidate}
-          onChange={(e) => setSelectedCandidate(e.target.value)}
-        >
-          <option value="">Seleccione un candidato</option>
-          <option value="1">Laura Gómez Martin - Diseño UI/UX</option>
-        </select>
+          <label style={styles.label}>Seleccionar Candidato *</label>
+          <select
+            style={styles.select}
+            value={selectedCandidate}
+            onChange={(e) => setSelectedCandidate(e.target.value)}
+          >
+            <option value="">Seleccione un candidato</option>
+            {candidatosLista.map((cand) => (
+              <option key={cand.id_candidato} value={cand.id_candidato}>
+                {cand.nombre_completo} - {cand.area_nombre || cand.email}
+              </option>
+            ))}
+          </select>
 
-        {candidateInfo && (
-          <>
-            <div style={styles.infoBox}>
-              <div style={styles.avatar}>LG</div>
-              <div>
-                <div style={{ fontWeight: 600 }}>{candidateInfo.nombre}</div>
-                <div style={{ fontSize: "12px", color: "#6B7280" }}>
-                  {candidateInfo.rol}
+          {candidatoInfo && (
+            <>
+              <div style={styles.infoBox}>
+                <div style={styles.avatar}>
+                  {candidatoInfo.nombre.substring(0, 2).toUpperCase()}
                 </div>
-                <div style={styles.tagContainer}>
-                  {candidateInfo.detalles.map((tag) => (
-                    <span key={tag} style={styles.tag}>
-                      {tag}
-                    </span>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{candidatoInfo.nombre}</div>
+                  <div style={{ fontSize: "12px", color: "#6B7280" }}>
+                    {candidatoInfo.rol}
+
+                  </div>
+                  <div style={styles.tagContainer}>
+                    {candidatoInfo.detalles.map((tag) => (
+                      <span key={tag} style={styles.tag}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <h3 style={styles.sectionTitle}>
+                Datos de la Entrevista (Automático)
+              </h3>
+              <div style={styles.grid}>
+                <div>
+                  <label style={styles.subLabel}>Cedula</label>
+                  <div>{candidatoInfo.cedula}</div>
+                </div>
+                <div>
+                  <label style={styles.subLabel}>Telefono</label>
+                  <div>{candidatoInfo.telefono}</div>
+                </div>
+                <div>
+                  <label style={styles.subLabel}>Direccion</label>
+                  <div>{candidatoInfo.direccion}</div>
+                </div>
+                <div>
+                  <label style={styles.subLabel}>Ubicacion</label>
+                  <div>{candidatoInfo.ubicacion}</div>
+                </div>
+                <div>
+                  <label style={styles.subLabel}>Aspiracion</label>
+                  <div>{candidatoInfo.aspiracion}</div>
+                </div>
+                <div>
+                  <label style={styles.subLabel}>Disponibilidad</label>
+                  <div>{candidatoInfo.disponibilidad}</div>
+                </div>
+                <div>
+                  <label style={styles.subLabel}>Entrevistador</label>
+                  <div>{candidatoInfo.entrevistador}</div>
+                </div>
+                <div>
+                  <label style={styles.subLabel}>Área</label>
+                  <div>{candidatoInfo.area}</div>
+                </div>
+                <div>
+                  <label style={styles.subLabel}>Fecha</label>
+                  <div>{candidatoInfo.fecha}</div>
+                </div>
+              </div>
+
+              <h3 style={styles.sectionTitle}>Evaluación de la Entrevista</h3>
+              <label style={styles.subLabel}>
+                Observaciones, Fortalezas y Debilidades *
+              </label>
+              <textarea
+                style={styles.textarea}
+                placeholder="Describa las observaciones..."
+                value={observaciones}
+                onChange={(e) => setObservaciones(e.target.value)}
+              />
+
+              <h3 style={styles.sectionTitle}>Puntuación de Competencias</h3>
+              <StarRating label="Competencia Técnica" category="tecnica" />
+              <StarRating label="Comunicación" category="comunicacion" />
+              <StarRating label="Nivel de Interés" category="interes" />
+
+              <div style={styles.footer}>
+                <h3 style={styles.sectionTitle}>Dictamen Final *</h3>
+                <div style={{ display: "flex", gap: "15px", marginBottom: "30px" }}>
+                  {[
+                    {
+                      label: "ELEGIBLE",
+                      val: "elegible",
+                      icon: <FaRegCheckCircle size={32} color={dictamen === "elegible" ? "#1A73E8" : "#6B7280"} />,
+                      desc: "Candidato apto para contratación"
+                    },
+                    {
+                      label: "EN CARTERA",
+                      val: "en_cartera",
+                      icon: <FaFolderOpen size={32} color={dictamen === "en_cartera" ? "#1A73E8" : "#6B7280"} />,
+                      desc: "Mantener para futuras oportunidades"
+                    },
+                    {
+                      label: "NO ELEGIBLE",
+                      val: "no_elegible",
+                      icon: <IoMdCloseCircle size={32} color={dictamen === "no_elegible" ? "#1A73E8" : "#6B7280"} />,
+                      desc: "No cumple con los requisitos"
+                    },
+                    {
+                      label: "EN REVISION",
+                      val: "en_revision",
+                      icon: <FaUserClock size={32} color={dictamen === "en_revision" ? "#1A73E8" : "#6B7280"} />,
+                      desc: "El perfil se encuentra en etapa de validación técnica."
+                    }
+                  ].map((opt) => (
+                    <div
+                      key={opt.val}
+                      onClick={() => setDictamen(opt.val)}
+                      style={{
+                        ...styles.optionCard,
+                        ...(dictamen === opt.val ? styles.optionSelected : {}),
+                      }}
+                    >
+                      {opt.icon}
+                      <div style={{ ...styles.optionLabel, color: dictamen === opt.val ? "#1A73E8" : "#374151" }}>
+                        {opt.label}
+                      </div>
+                      <div style={styles.optionDesc}>
+                        {opt.desc}
+                      </div>
+                    </div>
                   ))}
                 </div>
-              </div>
-            </div>
 
-            <h3 style={styles.sectionTitle}>
-              Datos de la Entrevista (Automático)
-            </h3>
-            <div style={styles.grid}>
-              <div>
-                <label style={styles.subLabel}>Entrevistador</label>
-                <div>{candidateInfo.entrevistador}</div>
-              </div>
-              <div>
-                <label style={styles.subLabel}>Área</label>
-                <div>{candidateInfo.area}</div>
-              </div>
-              <div>
-                <label style={styles.subLabel}>Fecha</label>
-                <div>{candidateInfo.fecha}</div>
-              </div>
-            </div>
+                <div style={{ marginBottom: "20px" }}>
+                  <label style={styles.subLabel}>
+                    Justificación del Dictamen *
+                  </label>
+                  <textarea
+                    style={styles.textarea}
+                    placeholder="Explique brevemente el porqué de su decisión..."
+                    value={justificacion}
+                    onChange={(e) => setJustificacion(e.target.value)}
+                  />
+                </div>
 
-            <h3 style={styles.sectionTitle}>Evaluación de la Entrevista</h3>
-            <label style={styles.subLabel}>
-              Observaciones, Fortalezas y Debilidades *
-            </label>
-            <textarea
-              style={styles.textarea}
-              placeholder="Describa las observaciones..."
-            />
-
-            <h3 style={styles.sectionTitle}>Puntuación de Competencias</h3>
-            <StarRating label="Competencia Técnica" category="tecnica" />
-            <StarRating label="Comunicación" category="comunicacion" />
-            <StarRating label="Nivel de Interés" category="interes" />
-
-            <div style={styles.footer}>
-              <h3 style={styles.sectionTitle}>Dictamen Final *</h3>
-              <div
-                style={{ display: "flex", gap: "10px", marginBottom: "20px" }}
-              >
-                {[
-                  { label: "APROBADO", val: "aprobado" },
-                  { label: "NO APROBADO", val: "no_aprobado" },
-                  { label: "EN ESPERA", val: "en_espera" },
-                ].map((opt) => (
-                  <div
-                    key={opt.val}
-                    onClick={() => setDictamen(opt.val)}
-                    style={{
-                      ...styles.optionCard,
-                      ...(dictamen === opt.val ? styles.optionSelected : {}),
-                    }}
-                  >
-                    {opt.label}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button style={styles.cancelBtn} onClick={onBack}>
+                      Cancelar
+                    </button>
+                    <button style={styles.saveBtn} onClick={handleSubmit}>
+                      Finalizar Entrevista y Guardar
+                    </button>
                   </div>
-                ))}
+                  <button onClick={() => onVerFicha && onVerFicha(candidatoSeleccionado)} style={styles.printBtn}>
+                    Imprimir Reporte
+                  </button>
+                </div>
               </div>
-
-              <div style={{ marginBottom: "20px" }}>
-                <label style={styles.subLabel}>
-                  Justificación del Dictamen *
-                </label>
-                <textarea
-                  style={styles.textarea}
-                  placeholder="Explique brevemente el porqué de su decisión..."
-                />
-              </div>
-
-              <button style={styles.cancelBtn} onClick={onBack}>
-                Cancelar
-              </button>
-              <button style={styles.saveBtn}>
-                Finalizar Entrevista y Guardar
-              </button>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
 const styles = {
+  pageWrapper: {
+    backgroundColor: 'rgb(243, 244, 246)',
+    width: '100%',
+    minHeight: 'calc(100vh - 68px)',
+    boxSizing: 'border-box',
+  },
   container: {
-    padding: "40px",
-    maxWidth: "900px",
+    padding: "36px 24px",
+    maxWidth: "1100px",
     margin: "0 auto",
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "Inter",
   },
   backButton: {
     display: "flex",
@@ -176,6 +311,9 @@ const styles = {
     color: "#1A73E8",
     cursor: "pointer",
     marginBottom: "20px",
+    fontFamily: "Inter",
+    fontSize: "16px",
+    fontWeight: "600",
   },
   card: {
     background: "white",
@@ -184,7 +322,7 @@ const styles = {
     border: "1px solid #E5E7EB",
     boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
   },
-  title: { fontSize: "20px", marginBottom: "20px", color: "#111827" },
+  title: { fontSize: "24px", marginBottom: "20px", color: "#111827" },
   label: {
     display: "block",
     marginBottom: "8px",
@@ -251,6 +389,7 @@ const styles = {
     borderRadius: "8px",
     border: "1px solid #D1D5DB",
     resize: "none",
+    fontFamily: "Inter",
   },
   ratingRow: {
     display: "flex",
@@ -264,20 +403,34 @@ const styles = {
   },
   optionCard: {
     flex: 1,
-    padding: "12px",
+    padding: "20px 15px",
     borderRadius: "8px",
-    border: "1px solid #D1D5DB",
+    border: "1px solid #E5E7EB",
     cursor: "pointer",
     textAlign: "center",
-    fontWeight: "600",
-    fontSize: "13px",
     backgroundColor: "white",
-    transition: "all 0.2s",
+    transition: "all 0.2s ease",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
   },
   optionSelected: {
     borderColor: "#1A73E8",
-    backgroundColor: "#EFF6FF",
-    color: "#1A73E8",
+    backgroundColor: "#F4F8FF",
+    boxShadow: "0 0 0 1px #1A73E8",
+  },
+  optionLabel: {
+    fontWeight: "700",
+    fontSize: "14px",
+    color: "#374151",
+    marginBottom: "5px",
+    marginTop: "10px",
+  },
+  optionDesc: {
+    fontSize: "12px",
+    color: "#6B7280",
+    fontWeight: "400",
   },
   cancelBtn: {
     padding: "10px 20px",
@@ -292,6 +445,14 @@ const styles = {
     borderRadius: "8px",
     border: "none",
     background: "#1A73E8",
+    color: "white",
+    cursor: "pointer",
+  },
+  printBtn: {
+    padding: "10px 20px",
+    borderRadius: "8px",
+    border: "none",
+    background: "#EF4444",
     color: "white",
     cursor: "pointer",
   },

@@ -1,6 +1,6 @@
 from rest_framework import viewsets, permissions
-from .models import Area, Especialidad, Candidato, Entrevista
-from .serializers import AreaSerializer, EspecialidadSerializer, CandidatoSerializer, EntrevistaSerializer
+from .models import Area, Especialidad, Candidato, Entrevista, Contratacion
+from .serializers import AreaSerializer, EspecialidadSerializer, CandidatoSerializer, EntrevistaSerializer, ContratacionSerializer
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.exceptions import PermissionDenied
@@ -132,3 +132,54 @@ class EntrevistaViewSet(viewsets.ModelViewSet):
         if not grupo and grupo.name != "RRHH":
             raise PermissionDenied("Acceso Denegado: Solo el personal de RR.HH. puede agendar y crear entrevistas.")
         serializer.save()
+
+class RegistrarCandidatoPublico(APIView):
+    """
+    Endpoint público: permite que cualquier persona se registre como candidato
+    sin necesidad de estar autenticada.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        # Inyectamos el estatus por defecto (el público NO puede elegirlo)
+        data = request.data.copy()
+        data['estatus'] = 'Pendiente'
+
+        # Honeypot: si el campo oculto "website" viene con datos, es un bot
+        if data.get('website', ''):
+            # Simulamos éxito para que el bot crea que funcionó
+            return Response(
+                {"mensaje": "Registro exitoso."},
+                status=status.HTTP_201_CREATED
+            )
+
+        serializer = CandidatoSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"mensaje": "¡Tu registro fue exitoso! Tu solicitud está en estatus Pendiente."},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ContratacionViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestionar contrataciones.
+    Solo RRHH puede crear/modificar registros de contratación.
+    """
+    queryset = Contratacion.objects.all()
+    serializer_class = ContratacionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        """
+        1. Verifica que el usuario sea del grupo RRHH
+        2. Inyecta automáticamente el usuario que procesa la contratación
+        """
+        grupo = self.request.user.groups.first()
+        if not grupo or grupo.name != 'RRHH':
+            raise PermissionDenied(
+                "Acceso Denegado: Solo el personal de RR.HH. puede procesar contrataciones."
+            )
+        serializer.save(procesado_por=self.request.user)

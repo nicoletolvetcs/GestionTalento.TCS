@@ -99,7 +99,7 @@ const ActionButtons = ({ onView, talent, onRellenarEntrevista }) => (
 );
 
 // 3. Fila de la Tabla (con efecto hover)
-const TalentRow = ({ talent, onVerFicha, onRellenarEntrevista }) => {
+const TalentRow = ({ talent, onVerFicha, onVerDetalle, onRellenarEntrevista }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -113,7 +113,9 @@ const TalentRow = ({ talent, onVerFicha, onRellenarEntrevista }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <td style={{ padding: '16px 24px', fontSize: '14px', fontWeight: 500, color: '#1F2937' }}>
+      <td style={{ padding: '16px 24px', fontSize: '14px', fontWeight: 500, color: '#1A73E8', cursor: 'pointer' }}
+        onClick={() => onVerDetalle(talent)}
+      >
         {talent.nombre_completo}
       </td>
 
@@ -157,7 +159,7 @@ const TalentRow = ({ talent, onVerFicha, onRellenarEntrevista }) => {
   );
 };
 // 4. Contenedor Principal
-const TalentTable = ({ data = [], onVerFicha, onRellenarEntrevista }) => {
+const TalentTable = ({ data = [], onVerFicha, onVerDetalle, onRellenarEntrevista }) => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalCandidato, setModalCandidato] = useState(null);
@@ -240,6 +242,7 @@ const TalentTable = ({ data = [], onVerFicha, onRellenarEntrevista }) => {
                   key={candidato.id_candidato}
                   talent={candidato}
                   onVerFicha={onVerFicha}
+                  onVerDetalle={onVerDetalle}
                   onRellenarEntrevista={() => handleEntrevistaClick(candidato)}
                 />
               ))

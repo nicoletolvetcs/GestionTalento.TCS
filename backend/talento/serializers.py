@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Area, Especialidad, Candidato, Entrevista
+from .models import Area, Especialidad, Candidato, Entrevista, Contratacion
 import re
 from django.utils.html import strip_tags
 
@@ -77,6 +77,14 @@ class CandidatoSerializer(serializers.ModelSerializer):
         if not re.match(r'^[VE]\d{6,9}$', value):
             raise serializers.ValidationError(
                 "La identificación debe comenzar con V o E seguido de 6 a 9 dígitos. Ejemplo: V12345678"
+            )
+        candidato_actual = self.instance
+        qs = Candidato.objects.filter(cedula=value)
+        if candidato_actual:
+            qs = qs.exclude(pk=candidato_actual.pk)
+        if qs.exists():
+            raise serializers.ValidationError(
+                "Ya existe un candidato registrado con esta cédula. Si ya te registraste, consulta tu estatus."
             )
         return value
     
@@ -160,3 +168,51 @@ class EntrevistaSerializer(serializers.ModelSerializer):
             if 'candidato' in data:
                 raise serializers.ValidationError("Los entrevistadores no pueden cambiar al candidato.")
         return data
+
+
+class ContratacionSerializer(serializers.ModelSerializer):
+    """
+    Serializer para el modelo Contratacion.
+    Regla de Negocio: Al crear una contratación, el estatus del candidato
+    se actualiza automáticamente a 'Contratado'.
+    """
+    # Campos de solo lectura para mostrar en respuestas
+    candidato_nombre = serializers.ReadOnlyField(source='candidato.nombre_completo')
+    area_nombre = serializers.ReadOnlyField(source='area_definitiva.nombre')
+    procesado_por_nombre = serializers.ReadOnlyField(source='procesado_por.username')
+
+    class Meta:
+        model = Contratacion
+        fields = [
+            'id', 'candidato', 'candidato_nombre',
+            'area_definitiva', 'area_nombre',
+            'fecha_ingreso', 'salario_acordado', 'moneda_salario',
+            'procesado_por', 'procesado_por_nombre',
+            'created_at',
+        ]
+        read_only_fields = ['procesado_por', 'created_at']
+
+    def create(self, validated_data):
+        """
+        Al crear la contratación, automáticamente cambiamos el estatus
+        del candidato asociado a 'Contratado'.
+        """
+        contratacion = super().create(validated_data)
+
+        # Actualizar estatus del candidato
+        candidato = contratacion.candidato
+        candidato.estatus = Candidato.EstatusCandidato.CONTRATADO
+        candidato.save(update_fields=['estatus'])
+
+        return contratacion
+
+    def validate_candidato(self, value):
+        """
+        Validar que el candidato esté en estatus 'Elegible' antes de contratarlo.
+        """
+        if value.estatus != Candidato.EstatusCandidato.ELEGIBLE:
+            raise serializers.ValidationError(
+                f"Solo se puede contratar a un candidato con estatus 'Elegible'. "
+                f"El estatus actual de {value.nombre_completo} es '{value.estatus}'."
+            )
+        return value

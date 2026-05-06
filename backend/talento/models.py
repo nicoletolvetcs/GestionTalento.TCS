@@ -42,6 +42,7 @@ class Candidato(models.Model):
         EN_CARTERA = 'En Cartera', 'En Cartera'
         NO_ELEGIBLE = 'No Elegible', 'No Elegible'
         EN_REVISION = 'En Revision', 'En Revision'
+        CONTRATADO = 'Contratado', 'Contratado'
 
     #  Enum para Disponibilidad ---
     class DisponibilidadChoices(models.TextChoices):
@@ -165,6 +166,47 @@ def sincronizar_estatus_candidato(sender, instance, **kwargs):
         candidato.estatus = Candidato.EstatusCandidato.PENDIENTE
         
     candidato.save() # Se dispara la actualización
+
+
+class Contratacion(models.Model):
+    """
+    Modelo para aislar la lógica de contratación.
+    Un candidato solo puede tener una contratación activa (OneToOne).
+    """
+    # Relación: A quién estamos contratando
+    candidato = models.OneToOneField(
+        'Candidato',
+        on_delete=models.CASCADE,
+        related_name='contratacion_activa'
+    )
+
+    # Relación: En qué área quedó finalmente
+    area_definitiva = models.ForeignKey(
+        'Area',
+        on_delete=models.PROTECT
+    )
+
+    # Datos específicos de la contratación
+    fecha_ingreso = models.DateField()
+    salario_acordado = models.DecimalField(max_digits=12, decimal_places=2)
+    moneda_salario = models.CharField(
+        max_length=3,
+        choices=Candidato.MonedaChoices.choices
+    )
+
+    # Trazabilidad: Quién de RRHH procesó esta contratación
+    procesado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'contrataciones'
+
+    def __str__(self):
+        return f"Contratación de {self.candidato.nombre_completo} - {self.area_definitiva.nombre}"
 
     
 

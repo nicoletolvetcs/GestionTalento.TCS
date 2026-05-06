@@ -18,8 +18,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from talento.views import CustomLoginView, ConsultarEstatusCandidato
+
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('talento.urls')),
+     path('api/login/', CustomLoginView.as_view(), name='login'),
+     path('api/consultar-estado/<str:cedula>/', ConsultarEstatusCandidato.as_view(), name='consultar-estado-publico'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

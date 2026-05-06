@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import EmailValidator, MinValueValidator, MaxValueValidator
+from django.core.validators import EmailValidator, MinValueValidator, MaxValueValidator, RegexValidator
 from django_countries import countries
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
@@ -42,6 +42,7 @@ class Candidato(models.Model):
         EN_CARTERA = 'En Cartera', 'En Cartera'
         NO_ELEGIBLE = 'No Elegible', 'No Elegible'
         EN_REVISION = 'En Revision', 'En Revision'
+        CONTRATADO = 'Contratado', 'Contratado'
 
     #  Enum para Disponibilidad ---
     class DisponibilidadChoices(models.TextChoices):
@@ -58,11 +59,20 @@ class Candidato(models.Model):
         EUR = 'EUR', 'EUR'
 
     id_candidato = models.AutoField(primary_key=True, db_column='id_candidato')
-    cedula = models.CharField(max_length=100, unique=True, db_column='numero_identificacion')
+    cedula = models.CharField(max_length=100, unique=True, db_column='numero_identificacion', validators=[RegexValidator(
+            regex=r'^[VE]\d{6,9}$',
+            message='La identificación debe comenzar con V o E seguido de 6 a 9 dígitos.'
+        )])
     fecha_nacimiento = models.DateField(null=True, blank=True)
-    nombre_completo = models.CharField(max_length=150)
+    nombre_completo = models.CharField(max_length=150, validators=[RegexValidator(
+            regex=r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$',
+            message='El nombre solo puede contener letras y espacios.'
+        )])
     email = models.EmailField(max_length=150, unique=True, validators=[EmailValidator(message="Ingresa un correo electrónico válido.")])
-    telefono = models.CharField(max_length=50)
+    telefono = models.CharField(max_length=50, validators=[RegexValidator(
+            regex=r'^\+58\s4\d{9}$',
+            message='El teléfono debe tener el formato +58 4XX XXXXXXX.'
+        )])
     ciudad = models.CharField(max_length=100, blank=True)
     pais = models.CharField(max_length=100, choices=CHOICES_PAISES,default='Venezuela')
     disponibilidad = models.CharField(max_length=100, blank=True)
@@ -156,6 +166,47 @@ def sincronizar_estatus_candidato(sender, instance, **kwargs):
         candidato.estatus = Candidato.EstatusCandidato.PENDIENTE
         
     candidato.save() # Se dispara la actualización
+
+
+class Contratacion(models.Model):
+    """
+    Modelo para aislar la lógica de contratación.
+    Un candidato solo puede tener una contratación activa (OneToOne).
+    """
+    # Relación: A quién estamos contratando
+    candidato = models.OneToOneField(
+        'Candidato',
+        on_delete=models.CASCADE,
+        related_name='contratacion_activa'
+    )
+
+    # Relación: En qué área quedó finalmente
+    area_definitiva = models.ForeignKey(
+        'Area',
+        on_delete=models.PROTECT
+    )
+
+    # Datos específicos de la contratación
+    fecha_ingreso = models.DateField()
+    salario_acordado = models.DecimalField(max_digits=12, decimal_places=2)
+    moneda_salario = models.CharField(
+        max_length=3,
+        choices=Candidato.MonedaChoices.choices
+    )
+
+    # Trazabilidad: Quién de RRHH procesó esta contratación
+    procesado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'contrataciones'
+
+    def __str__(self):
+        return f"Contratación de {self.candidato.nombre_completo} - {self.area_definitiva.nombre}"
 
     
 

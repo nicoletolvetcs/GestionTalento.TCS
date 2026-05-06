@@ -210,8 +210,8 @@ const PrintCard = ({ talentData, onBack }) => {
     },
 
     docs: {
-      identidad: !!talentData.url_documento_id,
-      cv: !!talentData.url_referencias,
+      identidad: !!talentData.documento_identidad,
+      cv: !!talentData.curriculum_vitae,
     },
 
     evaluacion: entrevista ? {

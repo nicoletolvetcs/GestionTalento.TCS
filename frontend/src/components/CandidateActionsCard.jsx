@@ -228,18 +228,30 @@ const CandidateActionsCard = ({
   onProcesarContratacion,
 }) => {
   const [showEntrevistaModal, setShowEntrevistaModal] = useState(false);
+  const [showContratadoModal, setShowContratadoModal] = useState(false);
 
   const estatus = candidato.estatus || 'Pendiente';
   const color = STATUS_COLORS[estatus] || STATUS_COLORS['Pendiente'];
 
   // Determina si ya tiene entrevista (si estatus no es Pendiente, asumimos que ya fue evaluado)
   const yaEvaluado = estatus !== 'Pendiente';
+  
+  // Determina si ya está contratado verificando el objeto anidado
+  const yaContratado = !!candidato.contratacion;
 
   const handleEntrevistaClick = () => {
     if (yaEvaluado) {
       setShowEntrevistaModal(true);
     } else {
       onProgramarEntrevista(candidato);
+    }
+  };
+
+  const handleContratacionClick = () => {
+    if (yaContratado) {
+      setShowContratadoModal(true);
+    } else {
+      onProcesarContratacion(candidato);
     }
   };
 
@@ -286,9 +298,9 @@ const CandidateActionsCard = ({
             {yaEvaluado ? 'Gestionar Entrevista' : 'Programar Entrevista'}
           </ActionBtn>
 
-          {/* Procesar Contratación — SOLO si es Elegible */}
-          {estatus === 'Elegible' && (
-            <ActionBtn variant="green" onClick={() => onProcesarContratacion(candidato)}>
+          {/* Procesar Contratación — SOLO si es Elegible o ya está contratado */}
+          {(estatus === 'Elegible' || yaContratado) && (
+            <ActionBtn variant="green" onClick={handleContratacionClick}>
               <FiCheckCircle size={18} />
               Procesar Contratación
             </ActionBtn>
@@ -306,13 +318,26 @@ const CandidateActionsCard = ({
         </div>
 
         {/* ── Sección Estado de Contratación (condicional) ── */}
-        {estatus === 'Elegible' && (
+        {(estatus === 'Elegible' || yaContratado) && (
           <div style={estilos.hiringSection}>
             <h4 style={estilos.hiringTitle}>Estado de Contratación</h4>
             <div style={estilos.hiringCard}>
-              <p style={estilos.hiringPlaceholder}>
-                Pendiente de procesamiento. Utiliza el botón "Procesar Contratación" para iniciar el proceso.
-              </p>
+              {yaContratado ? (
+                <div>
+                  <div style={{ color: '#059669', fontWeight: 700, marginBottom: '4px' }}>Candidato contratado</div>
+                  <div style={{ fontSize: '13px', color: '#374151' }}>
+                    Área: {candidato.contratacion.area_definitiva}
+                    {candidato.contratacion.especialidad_asignada && ` - ${candidato.contratacion.especialidad_asignada}`}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>
+                    Fecha ingreso: {candidato.contratacion.fecha_ingreso}
+                  </div>
+                </div>
+              ) : (
+                <p style={estilos.hiringPlaceholder}>
+                  Pendiente de procesamiento. Utiliza el botón "Procesar Contratación" para iniciar el proceso.
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -361,6 +386,50 @@ const CandidateActionsCard = ({
               </ActionBtn>
 
               <ActionBtn variant="outline" onClick={() => setShowEntrevistaModal(false)}>
+                <span style={{ fontSize: '15px' }}>✕</span>
+                Cerrar
+              </ActionBtn>
+            </div>
+
+          </div>
+        </div>
+      )}
+      
+      {/* ══════ MODAL: Candidato ya contratado ══════ */}
+      {showContratadoModal && (
+        <div style={estilos.modalOverlay}>
+          <div style={estilos.modalBox}>
+
+            {/* Header con gradiente naranja */}
+            <div style={{...estilos.modalHeader, background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'}}>
+              <button style={estilos.modalClose} onClick={() => setShowContratadoModal(false)}>×</button>
+              <div style={estilos.modalIcon}>
+                <FiCheckCircle color="white" size={35} />
+              </div>
+              <h2 style={estilos.modalTitle}>Candidato Contratado</h2>
+            </div>
+
+            {/* Cuerpo */}
+            <div style={estilos.modalBody}>
+              <div style={{...estilos.modalMessage, background: '#FFFBEB', border: '1px solid #FEF3C7', color: '#92400E'}}>
+                <span style={{ fontWeight: 600 }}>
+                  {candidato.nombre_completo}
+                </span>{' '}
+                ya ha sido contratado en el sistema. ¿Deseas editar los detalles de su contratación?
+              </div>
+            </div>
+
+            {/* Botones */}
+            <div style={estilos.modalActions}>
+              <ActionBtn variant="primary" onClick={() => {
+                setShowContratadoModal(false);
+                onProcesarContratacion(candidato); // Abre el modal de ProcessHiringModal
+              }}>
+                <CiEdit size={22} />
+                Editar Contratación
+              </ActionBtn>
+
+              <ActionBtn variant="outline" onClick={() => setShowContratadoModal(false)}>
                 <span style={{ fontSize: '15px' }}>✕</span>
                 Cerrar
               </ActionBtn>

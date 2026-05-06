@@ -210,8 +210,8 @@ const PublicViewRegister = () => {
         if (disponibilidad) pack.append('disponibilidad', disponibilidad);
 
         // Archivos
-        if (docsIdentidad.length > 0) pack.append('url_documento_id', docsIdentidad[0]);
-        if (cv && cv.length > 0) pack.append('url_referencias', cv[0]);
+        if (docsIdentidad.length > 0) pack.append('documento_identidad', docsIdentidad[0]);
+        if (cv && cv.length > 0) pack.append('curriculum_vitae', cv[0]);
 
         // NO enviamos 'estatus' — el backend lo fuerza a 'Pendiente'
 

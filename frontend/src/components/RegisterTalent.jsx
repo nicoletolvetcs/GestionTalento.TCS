@@ -215,11 +215,11 @@ const RegisterTalent = ({ onBack }) => {
 
     //  Agregamos los archivos
     if (docsIdentidad.length > 0) {
-      pack.append('url_documento_id', docsIdentidad[0]);
+      pack.append('documento_identidad', docsIdentidad[0]);
     }
     // Si cv es un array,  tomamos el primer elemento
     if (cv && cv.length > 0) {
-      pack.append('url_referencias', cv[0]);
+      pack.append('curriculum_vitae', cv[0]);
     }
 
     //  Agregamos el estatus por defecto

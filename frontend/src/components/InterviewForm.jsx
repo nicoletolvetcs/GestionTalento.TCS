@@ -62,9 +62,20 @@ const InterviewForm = ({ onBack, onVerFicha }) => {
       return;
     }
 
+    if (!dictamen) {
+      alert("Por favor seleccione un dictamen final (Elegible, En Cartera, No Elegible o En Revisión).");
+      return;
+    }
+
+    if (!justificacion.trim()) {
+      alert("Por favor escriba la justificación del dictamen.");
+      return;
+    }
+
     const payload = {
       candidato: parseInt(selectedCandidate),
       entrevistador: null,
+      // fecha_entrevista se registra automáticamente al FINALIZAR la entrevista
       fecha_entrevista: new Date().toISOString(),
       observaciones: observaciones,
       eligibilidad: dictamen,

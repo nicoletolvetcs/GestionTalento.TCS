@@ -25,6 +25,10 @@ from talento.views import CustomLoginView, ConsultarEstatusCandidato
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('talento.urls')),
-     path('api/login/', CustomLoginView.as_view(), name='login'),
-     path('api/consultar-estado/<str:cedula>/', ConsultarEstatusCandidato.as_view(), name='consultar-estado-publico'),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path('api/login/', CustomLoginView.as_view(), name='login'),
+    path('api/consultar-estado/<str:cedula>/', ConsultarEstatusCandidato.as_view(), name='consultar-estado-publico'),
+]
+
+# Servir archivos multimedia en desarrollo
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

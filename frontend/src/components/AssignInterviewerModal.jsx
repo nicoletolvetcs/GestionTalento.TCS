@@ -162,7 +162,7 @@ const AssignInterviewerModal = ({ candidato, onClose, onSuccess }) => {
     fetchEntrevistadores();
   }, []);
 
-  // Enviar la asignación
+  // Enviar la asignación — siempre POST (crea nueva entrevista)
   const handleGuardar = async () => {
     setError('');
 

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 
 // ── Estilos ──
 const estilos = {
@@ -95,6 +96,8 @@ const estilos = {
 };
 
 const CandidateInfoCard = ({ candidato, onEditarDatos }) => {
+  const { user } = useContext(AuthContext);
+  const esEntrevistador = ['Entrevistador', 'Entrevistadores'].includes(user?.rol);
 
   // Obtener iniciales para el avatar
   const getInitials = (name) => {
@@ -134,12 +137,14 @@ const CandidateInfoCard = ({ candidato, onEditarDatos }) => {
             <p style={estilos.cedula}>Cédula: {candidato.cedula}</p>
           </div>
         </div>
-        <button style={estilos.editBtn} onClick={onEditarDatos}
-          onMouseEnter={e => e.currentTarget.style.background = '#1557B0'}
-          onMouseLeave={e => e.currentTarget.style.background = '#1A73E8'}
-        >
-          Editar Datos
-        </button>
+        {!esEntrevistador && (
+          <button style={estilos.editBtn} onClick={onEditarDatos}
+            onMouseEnter={e => e.currentTarget.style.background = '#1557B0'}
+            onMouseLeave={e => e.currentTarget.style.background = '#1A73E8'}
+          >
+            Editar Datos
+          </button>
+        )}
       </div>
 
       {/* Grid de campos */}

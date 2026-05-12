@@ -89,8 +89,8 @@ function App() {
           </ProtectedRoute>
         )}
         {currentPage === "interviews" &&
-          (<ProtectedRoute allowedRoles={['RRHH', 'Entrevistador']}>
-            <Interviews onBack={() => setCurrentPage("search")} onVerFicha={handleVerFicha} />
+          (<ProtectedRoute allowedRoles={['RRHH', 'Entrevistador', 'Entrevistadores']}>
+            <Interviews onBack={() => setCurrentPage("search")} onVerFicha={handleVerFicha} onVerDetalle={handleVerDetalle} initialCandidato={selectedCandidate} />
           </ProtectedRoute>
           )}
 

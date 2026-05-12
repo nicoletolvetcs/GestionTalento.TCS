@@ -3,6 +3,7 @@ import { FaArrowLeft } from 'react-icons/fa';
 import CandidateInfoCard from './CandidateInfoCard';
 import CandidateActionsCard from './CandidateActionsCard';
 import AssignInterviewerModal from './AssignInterviewerModal';
+import ManageInterviewModal from './ManageInterviewModal';
 import ProcessHiringModal from './ProcessHiringModal';
 import EditCandidateModal from './EditCandidateModal';
 import api from '../api';
@@ -49,6 +50,7 @@ const CandidateDetail = ({ candidato: candidatoInicial, onBack, onVerFicha, onRe
   // Estado local del candidato (para poder actualizar el estatus sin volver al padre)
   const [candidato, setCandidato] = useState(candidatoInicial);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showManageModal, setShowManageModal] = useState(false);
   const [showHiringModal, setShowHiringModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -91,19 +93,25 @@ const CandidateDetail = ({ candidato: candidatoInicial, onBack, onVerFicha, onRe
     onVerFicha(cand);
   };
 
-  // ── Asignar Entrevistador (abre el modal) ──
+  // ── Asignar Entrevistador (abre el modal de asignación) ──
   const handleAsignarEntrevistador = () => {
     setShowAssignModal(true);
   };
 
-  // ── Programar Entrevista ──
-  const handleProgramarEntrevista = (cand) => {
+  // ── Gestionar Entrevista (abre el modal dinámico) ──
+  const handleGestionarEntrevista = () => {
+    setShowManageModal(true);
+  };
+
+  // ── Evaluar / Editar Entrevista (navega al formulario) ──
+  const handleEvaluarEntrevista = (cand) => {
     onRellenarEntrevista(cand);
   };
 
-  // ── Editar Entrevista ──
-  const handleEditarEntrevista = (cand) => {
-    onRellenarEntrevista(cand);
+  // ── Desde ManageInterviewModal: solicitar abrir AssignInterviewerModal ──
+  const handleRequestAssign = () => {
+    setShowManageModal(false);
+    setShowAssignModal(true);
   };
 
   // ── Procesar Contratación ──
@@ -145,19 +153,28 @@ const CandidateDetail = ({ candidato: candidatoInicial, onBack, onVerFicha, onRe
             onDescargarCV={handleDescargarCV}
             onImprimirFicha={handleImprimirFicha}
             onAsignarEntrevistador={handleAsignarEntrevistador}
-            onProgramarEntrevista={handleProgramarEntrevista}
-            onEditarEntrevista={handleEditarEntrevista}
+            onGestionarEntrevista={handleGestionarEntrevista}
             onProcesarContratacion={handleProcesarContratacion}
           />
         </div>
       </div>
 
-      {/* Modal de Asignar Entrevistador */}
+      {/* Modal de Asignar Entrevistador (siempre POST) */}
       {showAssignModal && (
         <AssignInterviewerModal
           candidato={candidato}
           onClose={() => setShowAssignModal(false)}
           onSuccess={recargarCandidato}
+        />
+      )}
+
+      {/* Modal de Gestionar Entrevista (dinámico: Caso A, B, C) */}
+      {showManageModal && (
+        <ManageInterviewModal
+          candidato={candidato}
+          onClose={() => setShowManageModal(false)}
+          onEvaluarEntrevista={handleEvaluarEntrevista}
+          onRequestAssign={handleRequestAssign}
         />
       )}
 

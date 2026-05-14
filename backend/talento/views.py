@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions, status
 from django.shortcuts import get_object_or_404
-from .models import Candidato
+from django.contrib.auth.models import User, Group
 
 
 class ConsultarEstatusCandidato(APIView):
@@ -45,6 +45,35 @@ class ConsultarEstatusCandidato(APIView):
         }, status=status.HTTP_200_OK)
 
 
+class ListarEntrevistadores(APIView):
+    """
+    Endpoint protegido: devuelve la lista de usuarios que pertenecen
+    al grupo 'Entrevistador' para llenar el <select> del frontend.
+    Solo usuarios autenticados pueden consultar esta lista.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        try:
+            grupo = Group.objects.get(name='Entrevistadores')
+        except Group.DoesNotExist:
+            return Response([], status=status.HTTP_200_OK)
+
+        entrevistadores = grupo.user_set.all().values(
+            'id', 'first_name', 'last_name', 'username'
+        )
+
+        # Construir respuesta con nombre completo
+        data = [
+            {
+                'id': e['id'],
+                'nombre_completo': f"{e['first_name']} {e['last_name']}".strip() or e['username'],
+                'username': e['username'],
+            }
+            for e in entrevistadores
+        ]
+        return Response(data, status=status.HTTP_200_OK)
+
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
@@ -65,13 +94,40 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class CustomLoginView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
+
 class AreaViewSet(viewsets.ModelViewSet):
     queryset = Area.objects.all()
     serializer_class = AreaSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
 
 class EspecialidadViewSet(viewsets.ModelViewSet):
     queryset = Especialidad.objects.all()
     serializer_class = EspecialidadSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+
+class ConfiguracionAreas(APIView):
+    """
+    Devuelve las áreas con sus especialidades anidadas.
+    Se usa para llenar los selects en cascada del modal de contratación.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        areas = Area.objects.filter(activo=True).prefetch_related('especialidad_set')
+        data = []
+        for area in areas:
+            data.append({
+                'id_area': area.id_area,
+                'nombre': area.nombre,
+                'especialidades': [
+                    {'id_especialidad': esp.id_especialidad, 'nombre': esp.nombre}
+                    for esp in area.especialidad_set.filter(activo=True)
+                ]
+            })
+        return Response(data, status=status.HTTP_200_OK)
+
 
 class CandidatoViewSet(viewsets.ModelViewSet):
     queryset = Candidato.objects.all()
@@ -93,16 +149,15 @@ class CandidatoViewSet(viewsets.ModelViewSet):
         if nombre:
             queryset = queryset.filter(nombre_completo__icontains=nombre)
         if salario:
-            # Si hay salario, filtramos asumiendo la moneda que viene del selector
             if moneda:
                 queryset = queryset.filter(aspiracion_salarial__lte=salario, moneda=moneda)
             else:
                 queryset = queryset.filter(aspiracion_salarial__lte=salario)
         elif moneda:
-            # Si no hay salario pero por alguna razón cambian la moneda
             queryset = queryset.filter(moneda=moneda)
             
         return queryset
+
 
 class EntrevistaViewSet(viewsets.ModelViewSet):
     queryset = Entrevista.objects.all()
@@ -111,27 +166,28 @@ class EntrevistaViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        grupo = user.group.first()
+        grupo = user.groups.first()
 
-        # Si el usuario es parte del grupo entrevistadores, solo puede ver los candidatos asignados a el. 
+        # Determinamos el queryset base según el rol
         if grupo and grupo.name == 'RRHH':
-           return Entrevista.objects.all().order_by('-created_at')
-        elif grupo and grupo.name == 'Entrevistador':
-            return Entrevista.objects.filter(entrevistador=user).order_by('-created_at')
+           queryset = Entrevista.objects.all().order_by('-created_at')
+        elif grupo and grupo.name == 'Entrevistadores':
+            queryset = Entrevista.objects.filter(entrevistador=user).order_by('-created_at')
         else:
             return Entrevista.objects.none()
         
-        # Filtro por candidato
+        # Filtro por candidato (para consultar entrevistas de un candidato específico)
         candidato_id = self.request.query_params.get('candidato')
         if candidato_id is not None:
             queryset = queryset.filter(candidato_id=candidato_id)
         return queryset
    
     def perform_create(self, serializer):
-        grupo = self.request.user.group.first()
-        if not grupo and grupo.name != "RRHH":
+        grupo = self.request.user.groups.first()
+        if not grupo or grupo.name != "RRHH":
             raise PermissionDenied("Acceso Denegado: Solo el personal de RR.HH. puede agendar y crear entrevistas.")
         serializer.save()
+
 
 class RegistrarCandidatoPublico(APIView):
     """
@@ -147,7 +203,6 @@ class RegistrarCandidatoPublico(APIView):
 
         # Honeypot: si el campo oculto "website" viene con datos, es un bot
         if data.get('website', ''):
-            # Simulamos éxito para que el bot crea que funcionó
             return Response(
                 {"mensaje": "Registro exitoso."},
                 status=status.HTTP_201_CREATED

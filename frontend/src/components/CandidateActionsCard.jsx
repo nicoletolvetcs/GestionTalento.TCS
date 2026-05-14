@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { FiFileText, FiPrinter, FiUserPlus, FiClipboard, FiCheckCircle } from 'react-icons/fi';
-import { IoWarningOutline } from 'react-icons/io5';
-import { FaRegCalendarAlt } from 'react-icons/fa';
 import { CiEdit } from 'react-icons/ci';
+import { AuthContext } from '../context/AuthContext';
+import api from '../api';
 
 // ── Colores del badge según estatus ──
 const STATUS_COLORS = {
@@ -195,19 +195,26 @@ const btnVariants = {
 };
 
 // Componente botón reutilizable
-const ActionBtn = ({ variant = 'outline', onClick, children }) => {
+const ActionBtn = ({ variant = 'outline', onClick, children, disabled = false }) => {
   const varStyle = btnVariants[variant] || btnVariants.outline;
   const isGradient = variant !== 'outline';
 
   return (
     <button
-      style={{ ...estilos.btnBase, ...varStyle }}
-      onClick={onClick}
+      style={{
+        ...estilos.btnBase,
+        ...varStyle,
+        ...(disabled ? { opacity: 0.45, cursor: 'not-allowed', filter: 'grayscale(0.3)' } : {}),
+      }}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       onMouseEnter={e => {
+        if (disabled) return;
         if (isGradient) e.currentTarget.style.opacity = '0.88';
         else e.currentTarget.style.background = '#F9FAFB';
       }}
       onMouseLeave={e => {
+        if (disabled) return;
         if (isGradient) e.currentTarget.style.opacity = '1';
         else e.currentTarget.style.background = '#ffffff';
       }}
@@ -223,23 +230,43 @@ const CandidateActionsCard = ({
   onDescargarCV,
   onImprimirFicha,
   onAsignarEntrevistador,
-  onProgramarEntrevista,
-  onEditarEntrevista,
+  onGestionarEntrevista,
   onProcesarContratacion,
 }) => {
-  const [showEntrevistaModal, setShowEntrevistaModal] = useState(false);
+  const [showContratadoModal, setShowContratadoModal] = useState(false);
+  const [tieneEntrevistaActiva, setTieneEntrevistaActiva] = useState(false);
+
+  const { user } = useContext(AuthContext);
+  const esEntrevistador = ['Entrevistador', 'Entrevistadores'].includes(user?.rol);
 
   const estatus = candidato.estatus || 'Pendiente';
   const color = STATUS_COLORS[estatus] || STATUS_COLORS['Pendiente'];
 
-  // Determina si ya tiene entrevista (si estatus no es Pendiente, asumimos que ya fue evaluado)
-  const yaEvaluado = estatus !== 'Pendiente';
+  // Determina si ya está contratado verificando el objeto anidado
+  const yaContratado = !!candidato.contratacion;
 
-  const handleEntrevistaClick = () => {
-    if (yaEvaluado) {
-      setShowEntrevistaModal(true);
+  // Verificar si tiene entrevista activa (programada pero no evaluada)
+  useEffect(() => {
+    const verificarEntrevista = async () => {
+      try {
+        const res = await api.get('entrevistas/');
+        const data = res.data.results ? res.data.results : res.data;
+        const activa = data.find(
+          e => e.candidato === candidato.id_candidato && e.fecha_programada && !e.eligibilidad
+        );
+        setTieneEntrevistaActiva(!!activa);
+      } catch (err) {
+        console.error('Error verificando entrevista activa:', err);
+      }
+    };
+    verificarEntrevista();
+  }, [candidato.id_candidato]);
+
+  const handleContratacionClick = () => {
+    if (yaContratado) {
+      setShowContratadoModal(true);
     } else {
-      onProgramarEntrevista(candidato);
+      onProcesarContratacion(candidato);
     }
   };
 
@@ -259,41 +286,52 @@ const CandidateActionsCard = ({
             {estatus}
           </span>
 
-          {/* ── Select para cambiar estatus ── */}
-          <label style={estilos.statusLabel}>Cambiar Estado</label>
-          <select
-            style={estilos.statusSelect}
-            value={estatus}
-            onChange={(e) => onCambiarEstatus(e.target.value)}
-            onFocus={e => e.currentTarget.style.borderColor = '#3B82F6'}
-            onBlur={e => e.currentTarget.style.borderColor = '#E5E7EB'}
-          >
-            {OPCIONES_ESTATUS.map(op => (
-              <option key={op} value={op}>{op}</option>
-            ))}
-          </select>
+          {/* ── Select para cambiar estatus — SOLO RRHH/Admin ── */}
+          {!esEntrevistador && (
+            <>
+              <label style={estilos.statusLabel}>Cambiar Estado</label>
+              <select
+                style={estilos.statusSelect}
+                value={estatus}
+                onChange={(e) => onCambiarEstatus(e.target.value)}
+                onFocus={e => e.currentTarget.style.borderColor = '#3B82F6'}
+                onBlur={e => e.currentTarget.style.borderColor = '#E5E7EB'}
+              >
+                {OPCIONES_ESTATUS.map(op => (
+                  <option key={op} value={op}>{op}</option>
+                ))}
+              </select>
+            </>
+          )}
         </div>
 
         {/* ── Botones de acción (stack vertical) ── */}
         <div style={estilos.actionsStack}>
-          <ActionBtn variant="primary" onClick={() => onAsignarEntrevistador(candidato)}>
-            <FiUserPlus size={18} />
-            Asignar Entrevistador
-          </ActionBtn>
+          {/* SOLO RRHH/Admin: Asignar Entrevistador */}
+          {!esEntrevistador && (
+            <ActionBtn variant="primary" onClick={() => onAsignarEntrevistador(candidato)} disabled={tieneEntrevistaActiva}>
+              <FiUserPlus size={18} />
+              {tieneEntrevistaActiva ? 'Entrevista ya programada' : 'Asignar Entrevistador'}
+            </ActionBtn>
+          )}
 
-          <ActionBtn variant="purple" onClick={handleEntrevistaClick}>
-            <FiClipboard size={18} />
-            {yaEvaluado ? 'Gestionar Entrevista' : 'Programar Entrevista'}
-          </ActionBtn>
+          {/* SOLO RRHH/Admin: Gestionar Entrevista */}
+          {!esEntrevistador && (
+            <ActionBtn variant="purple" onClick={() => onGestionarEntrevista(candidato)}>
+              <FiClipboard size={18} />
+              Gestionar Entrevista
+            </ActionBtn>
+          )}
 
-          {/* Procesar Contratación — SOLO si es Elegible */}
-          {estatus === 'Elegible' && (
-            <ActionBtn variant="green" onClick={() => onProcesarContratacion(candidato)}>
+          {/* SOLO RRHH/Admin: Procesar Contratación */}
+          {!esEntrevistador && (estatus === 'Elegible' || yaContratado) && (
+            <ActionBtn variant="green" onClick={handleContratacionClick}>
               <FiCheckCircle size={18} />
               Procesar Contratación
             </ActionBtn>
           )}
 
+          {/* Visible para TODOS los roles */}
           <ActionBtn variant="outline" onClick={() => onDescargarCV(candidato)}>
             <FiFileText size={16} />
             Descargar CV
@@ -305,62 +343,67 @@ const CandidateActionsCard = ({
           </ActionBtn>
         </div>
 
-        {/* ── Sección Estado de Contratación (condicional) ── */}
-        {estatus === 'Elegible' && (
+        {/* ── Sección Estado de Contratación (condicional) — SOLO RRHH/Admin ── */}
+        {!esEntrevistador && (estatus === 'Elegible' || yaContratado) && (
           <div style={estilos.hiringSection}>
             <h4 style={estilos.hiringTitle}>Estado de Contratación</h4>
             <div style={estilos.hiringCard}>
-              <p style={estilos.hiringPlaceholder}>
-                Pendiente de procesamiento. Utiliza el botón "Procesar Contratación" para iniciar el proceso.
-              </p>
+              {yaContratado ? (
+                <div>
+                  <div style={{ color: '#059669', fontWeight: 700, marginBottom: '4px' }}>Candidato contratado</div>
+                  <div style={{ fontSize: '13px', color: '#374151' }}>
+                    Área: {candidato.contratacion.area_definitiva}
+                    {candidato.contratacion.especialidad_asignada && ` - ${candidato.contratacion.especialidad_asignada}`}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>
+                    Fecha ingreso: {candidato.contratacion.fecha_ingreso}
+                  </div>
+                </div>
+              ) : (
+                <p style={estilos.hiringPlaceholder}>
+                  Pendiente de procesamiento. Utiliza el botón "Procesar Contratación" para iniciar el proceso.
+                </p>
+              )}
             </div>
           </div>
         )}
       </div>
-
-      {/* ══════ MODAL: Candidato ya evaluado ══════ */}
-      {showEntrevistaModal && (
+      
+      {/* ══════ MODAL: Candidato ya contratado ══════ */}
+      {showContratadoModal && (
         <div style={estilos.modalOverlay}>
           <div style={estilos.modalBox}>
 
-            {/* Header con gradiente */}
-            <div style={estilos.modalHeader}>
-              <button style={estilos.modalClose} onClick={() => setShowEntrevistaModal(false)}>×</button>
+            {/* Header con gradiente naranja */}
+            <div style={{...estilos.modalHeader, background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'}}>
+              <button style={estilos.modalClose} onClick={() => setShowContratadoModal(false)}>×</button>
               <div style={estilos.modalIcon}>
-                <IoWarningOutline color="white" size={35} />
+                <FiCheckCircle color="white" size={35} />
               </div>
-              <h2 style={estilos.modalTitle}>Candidato Evaluado</h2>
+              <h2 style={estilos.modalTitle}>Candidato Contratado</h2>
             </div>
 
             {/* Cuerpo */}
             <div style={estilos.modalBody}>
-              <div style={estilos.modalMessage}>
-                <span style={{ color: '#4F6EF7', fontWeight: 600 }}>
+              <div style={{...estilos.modalMessage, background: '#FFFBEB', border: '1px solid #FEF3C7', color: '#92400E'}}>
+                <span style={{ fontWeight: 600 }}>
                   {candidato.nombre_completo}
                 </span>{' '}
-                ya ha sido evaluado previamente. ¿Deseas continuar con alguna de las siguientes acciones?
+                ya ha sido contratado en el sistema. ¿Deseas editar los detalles de su contratación?
               </div>
             </div>
 
             {/* Botones */}
             <div style={estilos.modalActions}>
               <ActionBtn variant="primary" onClick={() => {
-                setShowEntrevistaModal(false);
-                onProgramarEntrevista(candidato);
-              }}>
-                <FaRegCalendarAlt size={18} />
-                Programar nueva entrevista
-              </ActionBtn>
-
-              <ActionBtn variant="purple" onClick={() => {
-                setShowEntrevistaModal(false);
-                onEditarEntrevista(candidato);
+                setShowContratadoModal(false);
+                onProcesarContratacion(candidato); // Abre el modal de ProcessHiringModal
               }}>
                 <CiEdit size={22} />
-                Editar entrevista
+                Editar Contratación
               </ActionBtn>
 
-              <ActionBtn variant="outline" onClick={() => setShowEntrevistaModal(false)}>
+              <ActionBtn variant="outline" onClick={() => setShowContratadoModal(false)}>
                 <span style={{ fontSize: '15px' }}>✕</span>
                 Cerrar
               </ActionBtn>

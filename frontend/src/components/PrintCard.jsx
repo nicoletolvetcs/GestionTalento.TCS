@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Section, DataField, Badge, GrayBox, StarRating, CheckItem } from './FichaCard';
 import { FaArrowLeft, FaFilePdf } from 'react-icons/fa';
-import axios from 'axios';
+import api from '../api';
 
 
 // ─── Encabezado del documento ───────────────────────────────────────────────
@@ -178,7 +178,7 @@ const PrintCard = ({ talentData, onBack }) => {
   // PASO 4: useEffect que busca la entrevista del candidato seleccionado
   useEffect(() => {
     if (talentData?.id_candidato) {
-      axios.get(`http://localhost:8000/api/entrevistas/?candidato=${talentData.id_candidato}`)
+      api.get(`entrevistas/?candidato=${talentData.id_candidato}`)
         .then(res => {
           const resultados = res.data.results ? res.data.results : res.data;
           if (resultados.length > 0) setEntrevista(resultados[0]);
@@ -210,8 +210,8 @@ const PrintCard = ({ talentData, onBack }) => {
     },
 
     docs: {
-      identidad: !!talentData.url_documento_id,
-      cv: !!talentData.url_referencias,
+      identidad: !!talentData.documento_identidad,
+      cv: !!talentData.curriculum_vitae,
     },
 
     evaluacion: entrevista ? {

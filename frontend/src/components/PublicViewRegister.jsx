@@ -210,8 +210,8 @@ const PublicViewRegister = () => {
         if (disponibilidad) pack.append('disponibilidad', disponibilidad);
 
         // Archivos
-        if (docsIdentidad.length > 0) pack.append('url_documento_id', docsIdentidad[0]);
-        if (cv && cv.length > 0) pack.append('url_referencias', cv[0]);
+        if (docsIdentidad.length > 0) pack.append('documento_identidad', docsIdentidad[0]);
+        if (cv && cv.length > 0) pack.append('curriculum_vitae', cv[0]);
 
         // NO enviamos 'estatus' — el backend lo fuerza a 'Pendiente'
 
@@ -230,42 +230,138 @@ const PublicViewRegister = () => {
         }
     };
 
-    // ── PANTALLA DE ÉXITO ──
+    // ── PANTALLA DE CONFIRMACIÓN PROFESIONAL ──
     if (registroExitoso) {
         return (
             <div style={{
-                backgroundColor: '#F3F4F6', minHeight: '100vh',
+                backgroundColor: '#F0F4F8', minHeight: '100vh',
                 display: 'flex', justifyContent: 'center', alignItems: 'center',
-                fontFamily: '"Inter", sans-serif'
+                fontFamily: '"Inter", sans-serif', padding: '24px',
             }}>
                 <div style={{
-                    background: 'white', padding: '48px', borderRadius: '16px',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.05)', border: '1px solid #E5E7EB',
-                    textAlign: 'center', maxWidth: '500px'
+                    background: 'white', padding: '56px 48px', borderRadius: '20px',
+                    boxShadow: '0 8px 30px rgba(0,0,0,0.08)', border: '1px solid #E2E8F0',
+                    textAlign: 'center', maxWidth: '560px', width: '100%',
                 }}>
-                    <div style={{ fontSize: '64px', marginBottom: '16px' }}>✅</div>
-                    <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1F2937', marginBottom: '12px' }}>
-                        ¡Registro Exitoso!
+                    {/* Icono animado con gradiente */}
+                    <div style={{
+                        width: '88px', height: '88px', borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #34D399 0%, #059669 100%)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        margin: '0 auto 24px', boxShadow: '0 4px 14px rgba(5,150,105,0.3)',
+                        animation: 'fadeInScale 0.5s ease-out',
+                    }}>
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+
+                    <h2 style={{
+                        fontSize: '26px', fontWeight: '800', color: '#0F172A',
+                        marginBottom: '8px', letterSpacing: '-0.5px',
+                    }}>
+                        ¡Postulación Recibida!
                     </h2>
-                    <p style={{ color: '#6B7280', fontSize: '14px', lineHeight: '1.6', marginBottom: '24px' }}>
-                        Tu postulación ha sido recibida correctamente. Nuestro equipo de Recursos Humanos
-                        revisará tu perfil y te contactará pronto.
-                    </p>
                     <p style={{
-                        background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: '8px',
-                        padding: '12px 16px', fontSize: '13px', color: '#075985', marginBottom: '24px'
+                        color: '#64748B', fontSize: '15px', lineHeight: '1.7',
+                        marginBottom: '32px', maxWidth: '420px', margin: '0 auto 32px',
                     }}>
-                        <strong>Tip:</strong> Puedes consultar el estado de tu postulación en cualquier momento
-                        ingresando tu cédula en nuestro portal de consulta.
+                        Tu perfil profesional ha sido registrado exitosamente en nuestro
+                        Sistema de Gestión de Talento Humano.
                     </p>
-                    <button onClick={() => window.location.href = '/consulta-publica'} style={{
-                        padding: '12px 32px', borderRadius: '8px', background: '#1A73E8',
-                        color: 'white', border: 'none', cursor: 'pointer',
-                        fontWeight: '600', fontSize: '14px'
+
+                    {/* Timeline: Próximos pasos */}
+                    <div style={{
+                        textAlign: 'left', background: '#F8FAFC', borderRadius: '12px',
+                        padding: '24px 28px', marginBottom: '32px', border: '1px solid #E2E8F0',
                     }}>
-                        Consultar Estado
-                    </button>
+                        <h3 style={{
+                            fontSize: '13px', fontWeight: '700', color: '#94A3B8',
+                            textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '20px', marginTop: 0,
+                        }}>
+                            ¿Qué sigue?
+                        </h3>
+                        {[
+                            { step: '1', title: 'Revisión de tu perfil', desc: 'Nuestro equipo de RRHH revisará tu documentación y experiencia.' },
+                            { step: '2', title: 'Programación de entrevista', desc: 'Si tu perfil aplica, te contactaremos para agendar una entrevista.' },
+                            { step: '3', title: 'Resultado del proceso', desc: 'Recibirás una notificación con el dictamen final de tu evaluación.' },
+                        ].map((item, i) => (
+                            <div key={i} style={{
+                                display: 'flex', gap: '16px', alignItems: 'flex-start',
+                                marginBottom: i < 2 ? '20px' : '0',
+                            }}>
+                                <div style={{
+                                    width: '28px', height: '28px', borderRadius: '50%',
+                                    background: '#EFF6FF', color: '#2563EB', flexShrink: 0,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: '12px', fontWeight: '700', border: '1px solid #BFDBFE',
+                                }}>
+                                    {item.step}
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: '600', fontSize: '14px', color: '#1E293B', marginBottom: '2px' }}>
+                                        {item.title}
+                                    </div>
+                                    <div style={{ fontSize: '13px', color: '#64748B', lineHeight: '1.5' }}>
+                                        {item.desc}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Info box */}
+                    <div style={{
+                        background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: '10px',
+                        padding: '14px 20px', fontSize: '13px', color: '#0369A1', marginBottom: '28px',
+                        display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left',
+                    }}>
+                        <span style={{ fontSize: '18px', flexShrink: 0 }}>💡</span>
+                        <span>
+                            Puedes consultar el estado de tu postulación en cualquier momento
+                            ingresando tu número de cédula en nuestro portal.
+                        </span>
+                    </div>
+
+                    {/* Botones CTA */}
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <button onClick={() => window.location.href = '/consulta-publica'} style={{
+                            padding: '12px 28px', borderRadius: '10px', background: '#2563EB',
+                            color: 'white', border: 'none', cursor: 'pointer',
+                            fontWeight: '600', fontSize: '14px', transition: 'all 0.2s',
+                            boxShadow: '0 2px 8px rgba(37,99,235,0.3)',
+                        }}>
+                            Consultar Estado
+                        </button>
+                        <button onClick={() => window.location.reload()} style={{
+                            padding: '12px 28px', borderRadius: '10px', background: 'white',
+                            color: '#374151', border: '1px solid #D1D5DB', cursor: 'pointer',
+                            fontWeight: '600', fontSize: '14px', transition: 'all 0.2s',
+                        }}>
+                            Registrar otro candidato
+                        </button>
+                    </div>
+
+                    {/* Footer discreto */}
+                    <div style={{
+                        marginTop: '36px', paddingTop: '20px', borderTop: '1px solid #E2E8F0',
+                    }}>
+                        <span style={{
+                            fontSize: '11px', color: '#94A3B8', fontWeight: '500',
+                            letterSpacing: '0.3px',
+                        }}>
+                            SGTH — Sistema de Gestión de Talento Humano
+                        </span>
+                    </div>
                 </div>
+
+                {/* Animación CSS inyectada */}
+                <style>{`
+                    @keyframes fadeInScale {
+                        from { opacity: 0; transform: scale(0.5); }
+                        to { opacity: 1; transform: scale(1); }
+                    }
+                `}</style>
             </div>
         );
     }

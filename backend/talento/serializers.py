@@ -139,6 +139,26 @@ class CandidatoSerializer(serializers.ModelSerializer):
             })
         return data
 
+    # ── Validación de archivos: tamaño máximo 5MB ──
+    MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+
+    def _validate_file_size(self, value, field_label):
+        if value and hasattr(value, 'size') and value.size > self.MAX_FILE_SIZE:
+            size_mb = round(value.size / (1024 * 1024), 1)
+            raise serializers.ValidationError(
+                f"El archivo de {field_label} pesa {size_mb}MB. El máximo permitido es 5MB."
+            )
+        return value
+
+    def validate_curriculum_vitae(self, value):
+        return self._validate_file_size(value, "Currículum Vitae")
+
+    def validate_documento_identidad(self, value):
+        return self._validate_file_size(value, "Documento de Identidad")
+
+    def validate_referencias(self, value):
+        return self._validate_file_size(value, "Referencias")
+
 
     class Meta:
         model = Candidato
@@ -146,9 +166,29 @@ class CandidatoSerializer(serializers.ModelSerializer):
                 'fecha_nacimiento', 'nombre_completo',
                  'email', 'telefono', 'ciudad', 'pais', 
                  'disponibilidad', 'direccion', 
-                 'aspiracion_salarial', 'moneda', 'url_documento_id', 
-                 'url_referencias', 'created_at', 
-                 'especialidades_detalle','area_nombre', 'especialidades', 'estatus']
+                 'aspiracion_salarial', 'moneda', 'documento_identidad', 
+                 'curriculum_vitae', 'referencias', 'created_at', 
+                 'especialidades_detalle','area_nombre', 'especialidades', 'estatus',
+                 'contratacion']
+
+    # Campo anidado: si existe registro en Contratacion, lo expone; si no, devuelve null
+    contratacion = serializers.SerializerMethodField()
+
+    def get_contratacion(self, obj):
+        try:
+            c = obj.contratacion_activa
+            return {
+                'id': c.id,
+                'area_definitiva': c.area_definitiva.nombre,
+                'especialidad_asignada': c.especialidad_asignada.nombre if c.especialidad_asignada else None,
+                'fecha_ingreso': c.fecha_ingreso,
+                'salario_acordado': str(c.salario_acordado),
+                'moneda_salario': c.moneda_salario,
+                'procesado_por': c.procesado_por.username if c.procesado_por else None,
+                'created_at': c.created_at,
+            }
+        except Contratacion.DoesNotExist:
+            return None
 
 class EntrevistaSerializer(serializers.ModelSerializer):
     candidato_nombre = serializers.ReadOnlyField(source='candidato.nombre_completo')
@@ -158,13 +198,13 @@ class EntrevistaSerializer(serializers.ModelSerializer):
         model = Entrevista
         fields = ['id_entrevista', 'candidato', 
                 'candidato_nombre', 'entrevistador', 
-                'entrevistador_nombre', 'fecha_entrevista', 
+                'entrevistador_nombre', 'fecha_programada', 'fecha_entrevista', 
                 'observaciones', 'eligibilidad', 'puntuacion_tecnica', 
                 'puntuacion_comunicacion', 'puntuacion_interes', 
                 'justificacion_dictamen','created_at']
     def validate (self,data):
         user = self.context['request'].user
-        if user.group.filter(name='Entrevistador').exists():
+        if user.groups.filter(name='Entrevistadores').exists():
             if 'candidato' in data:
                 raise serializers.ValidationError("Los entrevistadores no pueden cambiar al candidato.")
         return data
@@ -173,12 +213,11 @@ class EntrevistaSerializer(serializers.ModelSerializer):
 class ContratacionSerializer(serializers.ModelSerializer):
     """
     Serializer para el modelo Contratacion.
-    Regla de Negocio: Al crear una contratación, el estatus del candidato
-    se actualiza automáticamente a 'Contratado'.
+    La contratación se detecta por existencia de registro, NO modifica estatus del candidato.
     """
-    # Campos de solo lectura para mostrar en respuestas
     candidato_nombre = serializers.ReadOnlyField(source='candidato.nombre_completo')
     area_nombre = serializers.ReadOnlyField(source='area_definitiva.nombre')
+    especialidad_nombre = serializers.ReadOnlyField(source='especialidad_asignada.nombre')
     procesado_por_nombre = serializers.ReadOnlyField(source='procesado_por.username')
 
     class Meta:
@@ -186,33 +225,9 @@ class ContratacionSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'candidato', 'candidato_nombre',
             'area_definitiva', 'area_nombre',
+            'especialidad_asignada', 'especialidad_nombre',
             'fecha_ingreso', 'salario_acordado', 'moneda_salario',
             'procesado_por', 'procesado_por_nombre',
             'created_at',
         ]
         read_only_fields = ['procesado_por', 'created_at']
-
-    def create(self, validated_data):
-        """
-        Al crear la contratación, automáticamente cambiamos el estatus
-        del candidato asociado a 'Contratado'.
-        """
-        contratacion = super().create(validated_data)
-
-        # Actualizar estatus del candidato
-        candidato = contratacion.candidato
-        candidato.estatus = Candidato.EstatusCandidato.CONTRATADO
-        candidato.save(update_fields=['estatus'])
-
-        return contratacion
-
-    def validate_candidato(self, value):
-        """
-        Validar que el candidato esté en estatus 'Elegible' antes de contratarlo.
-        """
-        if value.estatus != Candidato.EstatusCandidato.ELEGIBLE:
-            raise serializers.ValidationError(
-                f"Solo se puede contratar a un candidato con estatus 'Elegible'. "
-                f"El estatus actual de {value.nombre_completo} es '{value.estatus}'."
-            )
-        return value

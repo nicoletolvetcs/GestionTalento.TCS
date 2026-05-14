@@ -92,12 +92,14 @@ const Navbar = ({ userName, userRole, activePage, onNavChange, onLogout }) => {
             onClick={() => onNavChange("search")}
           />
 
-          <NavButton
-            label="Registrar"
-            active={activePage === "register"}
-            icon={<FiUserPlus />}
-            onClick={() => onNavChange("register")}
-          />
+          {!['Entrevistador', 'Entrevistadores'].includes(userRole) && (
+            <NavButton
+              label="Registrar"
+              active={activePage === "register"}
+              icon={<FiUserPlus />}
+              onClick={() => onNavChange("register")}
+            />
+          )}
           <NavButton
             label="Entrevistas"
             active={activePage === "interviews"}

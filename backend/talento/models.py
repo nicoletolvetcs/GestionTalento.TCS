@@ -1,9 +1,39 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import EmailValidator, MinValueValidator, MaxValueValidator, RegexValidator
+from django.core.validators import EmailValidator, MinValueValidator, MaxValueValidator, RegexValidator, FileExtensionValidator
 from django_countries import countries
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+
+import os
+
+def _get_extension(filename):
+    """Extrae la extensión de un archivo de forma segura."""
+    return os.path.splitext(filename)[1].lower() if filename else '.pdf'
+
+def ruta_cv(instance, filename):
+    """
+    Genera: candidatos/<cedula>/<cedula>_cv.<ext>
+    """
+    cedula = instance.cedula if instance.cedula else 'Sin_Cedula'
+    ext = _get_extension(filename)
+    return f'candidatos/{cedula}/{cedula}_cv{ext}'
+
+def ruta_documento_identidad(instance, filename):
+    """
+    Genera: candidatos/<cedula>/<cedula>_doc1.<ext>
+    """
+    cedula = instance.cedula if instance.cedula else 'Sin_Cedula'
+    ext = _get_extension(filename)
+    return f'candidatos/{cedula}/{cedula}_doc1{ext}'
+
+def ruta_referencias(instance, filename):
+    """
+    Genera: candidatos/<cedula>/<cedula>_doc2.<ext>
+    """
+    cedula = instance.cedula if instance.cedula else 'Sin_Cedula'
+    ext = _get_extension(filename)
+    return f'candidatos/{cedula}/{cedula}_doc2{ext}'
 
 
 CHOICES_PAISES = [('', 'Seleccionar País')] + [(name, name) for code, name in list(countries)]
@@ -42,7 +72,6 @@ class Candidato(models.Model):
         EN_CARTERA = 'En Cartera', 'En Cartera'
         NO_ELEGIBLE = 'No Elegible', 'No Elegible'
         EN_REVISION = 'En Revision', 'En Revision'
-        CONTRATADO = 'Contratado', 'Contratado'
 
     #  Enum para Disponibilidad ---
     class DisponibilidadChoices(models.TextChoices):
@@ -78,8 +107,21 @@ class Candidato(models.Model):
     disponibilidad = models.CharField(max_length=100, blank=True)
     direccion = models.CharField(max_length=200, blank=True)
     aspiracion_salarial = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0, message="El salario no puede ser negativo.")])
-    url_documento_id = models.FileField(upload_to='documentos/ids/', null=True, blank=True)
-    url_referencias = models.FileField(upload_to='documentos/referencias/', null=True, blank=True)
+    documento_identidad = models.FileField(
+        upload_to=ruta_documento_identidad, 
+        null=True, blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'jpg', 'jpeg', 'png'])]
+    )
+    curriculum_vitae = models.FileField(
+        upload_to=ruta_cv, 
+        null=True, blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=['pdf'])]
+    )
+    referencias = models.FileField(
+        upload_to=ruta_referencias, 
+        null=True, blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'jpg', 'jpeg', 'png'])]
+    )
     moneda = models.CharField(
         max_length=3,
         choices=MonedaChoices.choices,
@@ -116,8 +158,9 @@ class Entrevista(models.Model):
     id_entrevista = models.AutoField(primary_key=True, db_column='id_entrevista')
     candidato = models.ForeignKey(Candidato, on_delete=models.CASCADE, db_column='candidato_id')
     entrevistador = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, db_column='entrevistador_id')
-    fecha_entrevista = models.DateTimeField()
-    observaciones = models.TextField()
+    fecha_programada = models.DateTimeField(null=True, blank=True, help_text="Fecha/hora programada por RRHH")
+    fecha_entrevista = models.DateTimeField(null=True, blank=True, help_text="Fecha/hora real de finalización")
+    observaciones = models.TextField(blank=True, default='')
     puntuacion_tecnica = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
         default=1
@@ -130,7 +173,7 @@ class Entrevista(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(5)],
         default=1
     )
-    eligibilidad = models.CharField(max_length=100) # En el diagrama dice "type", lo mapeamos como CharField
+    eligibilidad = models.CharField(max_length=100, blank=True, default='') # Se llena cuando el entrevistador evalúa
     justificacion_dictamen = models.TextField(
         blank=True, 
         null=True,
@@ -187,6 +230,12 @@ class Contratacion(models.Model):
     )
 
     # Datos específicos de la contratación
+    especialidad_asignada = models.ForeignKey(
+        'Especialidad',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
+    )
     fecha_ingreso = models.DateField()
     salario_acordado = models.DecimalField(max_digits=12, decimal_places=2)
     moneda_salario = models.CharField(

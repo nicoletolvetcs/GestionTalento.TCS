@@ -7,6 +7,12 @@ const TalentManagement = ({ onVerFicha, onVerDetalle, onRellenarEntrevista }) =>
     const [candidatos, setCandidatos] = useState([]);
     const [loading, setLoading] = useState(false);
 
+    // Estado para los filtros locales (Nombre/Cédula + Estatus)
+    const [localFilters, setLocalFilters] = useState({
+        searchQuery: "",
+        estatus: "Todos",
+    });
+
     // Función que conecta con el backend
     const fetchTalento = async (filtros = {}) => {
         setLoading(true);
@@ -32,18 +38,44 @@ const TalentManagement = ({ onVerFicha, onVerDetalle, onRellenarEntrevista }) =>
         fetchTalento();
     }, []);
 
+    // Aplicar filtros locales (Nombre/Cédula + Estatus) — case-insensitive
+    const candidatosFiltrados = candidatos.filter(c => {
+        const query = localFilters.searchQuery.toLowerCase().trim();
+
+        // Filtro por nombre o cédula (case-insensitive)
+        if (query) {
+            const nombre = (c.nombre_completo || "").toLowerCase();
+            const cedula = (c.cedula || "").toLowerCase();
+            if (!nombre.includes(query) && !cedula.includes(query)) {
+                return false;
+            }
+        }
+
+        // Filtro por estatus
+        if (localFilters.estatus !== "Todos") {
+            if ((c.estatus || "Pendiente") !== localFilters.estatus) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+
     return (
         <div style={{ padding: '40px', backgroundColor: '#F3F4F6', minHeight: '100vh' }}>
-            {/* 1. El Buscador (le pasamos la función de búsqueda) */}
-            <TalentSearch onSearch={fetchTalento} />
+            {/* 1. El Buscador (le pasamos la función de búsqueda + callback de filtros locales) */}
+            <TalentSearch
+                onSearch={fetchTalento}
+                onLocalFilter={setLocalFilters}
+            />
 
-            {/* 2. La Tabla (le pasamos los datos reales) */}
+            {/* 2. La Tabla (le pasamos los datos filtrados) */}
             {loading ? (
                 <div style={{ textAlign: 'center', padding: '50px', color: '#6B7280' }}>
                     Buscando en la base de datos...
                 </div>
             ) : (
-                <TalentTable data={candidatos} onVerFicha={onVerFicha} onVerDetalle={onVerDetalle} onRellenarEntrevista={onRellenarEntrevista} />
+                <TalentTable data={candidatosFiltrados} onVerFicha={onVerFicha} onVerDetalle={onVerDetalle} onRellenarEntrevista={onRellenarEntrevista} />
             )}
         </div>
     );

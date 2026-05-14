@@ -76,7 +76,7 @@ const ActionButtons = ({ onView, talent, onRellenarEntrevista }) => (
     <button
       type="button"
       onClick={() => {
-        const url = talent?.url_referencias || talent?.url_documento_id;
+        const url = talent?.curriculum_vitae || talent?.documento_identidad;
         if (!url) {
           alert(`El candidato ${talent?.nombre_completo} no posee documentos registrados.`);
           return;
@@ -89,7 +89,7 @@ const ActionButtons = ({ onView, talent, onRellenarEntrevista }) => (
         cursor: "pointer",
         fontSize: "20px",
         color: "#EF4444",
-        opacity: (talent?.url_referencias || talent?.url_documento_id) ? 1 : 0.4,
+        opacity: (talent?.curriculum_vitae || talent?.documento_identidad) ? 1 : 0.4,
       }}
       title="Descargar CV"
     >

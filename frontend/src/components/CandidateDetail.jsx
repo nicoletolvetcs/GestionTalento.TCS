@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaArrowLeft } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import CandidateInfoCard from './CandidateInfoCard';
 import CandidateActionsCard from './CandidateActionsCard';
 import AssignInterviewerModal from './AssignInterviewerModal';
@@ -47,6 +48,7 @@ const estilos = {
 };
 
 const CandidateDetail = ({ candidato: candidatoInicial, onBack, onVerFicha, onRellenarEntrevista }) => {
+  const navigate = useNavigate();
   // Estado local del candidato (para poder actualizar el estatus sin volver al padre)
   const [candidato, setCandidato] = useState(candidatoInicial);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -103,9 +105,9 @@ const CandidateDetail = ({ candidato: candidatoInicial, onBack, onVerFicha, onRe
     setShowManageModal(true);
   };
 
-  // ── Evaluar / Editar Entrevista (navega al formulario) ──
+  // ── Evaluar / Editar Entrevista (navega al formulario de evaluación) ──
   const handleEvaluarEntrevista = (cand) => {
-    onRellenarEntrevista(cand);
+    navigate(`/entrevistas/evaluar/${cand.id_candidato}`);
   };
 
   // ── Desde ManageInterviewModal: solicitar abrir AssignInterviewerModal ──

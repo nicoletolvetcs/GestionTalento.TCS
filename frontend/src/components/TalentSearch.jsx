@@ -59,6 +59,31 @@ const styles = {
         color: "#374151",
         outline: "none",
     },
+    searchInputWrapper: {
+        position: "relative",
+        width: "100%",
+    },
+    searchIcon: {
+        position: "absolute",
+        left: "12px",
+        top: "50%",
+        transform: "translateY(-50%)",
+        color: "#9CA3AF",
+        fontSize: "16px",
+        pointerEvents: "none",
+    },
+    searchInput: {
+        width: "100%",
+        height: "42px",
+        padding: "0 12px 0 36px",
+        backgroundColor: "#F9FAFB",
+        border: "1px solid #E5E7EB",
+        borderRadius: "8px",
+        fontSize: "14px",
+        color: "#374151",
+        outline: "none",
+        boxSizing: "border-box",
+    },
     currencySelect: {
         width: "70px",
         height: "42px",
@@ -106,7 +131,9 @@ const styles = {
     }
 };
 
-const TalentSearch = ({ onSearch }) => {
+const OPCIONES_ESTATUS = ["Todos", "Elegible", "En Cartera", "No Elegible", "En Revisión", "Pendiente"];
+
+const TalentSearch = ({ onSearch, onLocalFilter }) => {
     const [areas, setAreas] = useState([]);
     const [especialidades, setEspecialidades] = useState([]);
 
@@ -115,6 +142,10 @@ const TalentSearch = ({ onSearch }) => {
     const [especialidadesFiltradas, setEspecialidadesFiltradas] = useState([]);
     const [salary, setSalary] = useState("");
     const [currency, setCurrency] = useState("USD");
+
+    // Nuevos filtros (Tarea 3)
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedEstatus, setSelectedEstatus] = useState("Todos");
 
     const [isHoveredSearch, setIsHoveredSearch] = useState(false);
     const [isHoveredClear, setIsHoveredClear] = useState(false);
@@ -148,7 +179,17 @@ const TalentSearch = ({ onSearch }) => {
         setSelectedSpecialty('');
     }, [selectedArea, especialidades]);
 
-    // 3. Al hacer clic en buscar, enviamos los datos al componente Padre
+    // 3. Emitir filtros locales cuando cambian searchQuery o selectedEstatus
+    useEffect(() => {
+        if (onLocalFilter) {
+            onLocalFilter({
+                searchQuery: searchQuery,
+                estatus: selectedEstatus,
+            });
+        }
+    }, [searchQuery, selectedEstatus]);
+
+    // 4. Al hacer clic en buscar, enviamos los datos al componente Padre (filtros del backend)
     const handleSearchClick = () => {
         if (onSearch) {
             onSearch({
@@ -164,6 +205,8 @@ const TalentSearch = ({ onSearch }) => {
         setSelectedArea("");
         setSelectedSpecialty("");
         setSalary("");
+        setSearchQuery("");
+        setSelectedEstatus("Todos");
         if (onSearch) {
             onSearch({ area: "", especialidad: "", salario: "", moneda: "" });
         }
@@ -175,7 +218,41 @@ const TalentSearch = ({ onSearch }) => {
                 Buscador Inteligente de Talento
             </h2>
 
-            {/* Fila de campos */}
+            {/* Fila 1: Búsqueda por Nombre/Cédula + Estatus */}
+            <div style={styles.row}>
+                <div style={{ flex: "2 1 400px" }}>
+                    <label style={styles.label}>
+                        Buscar por Nombre o Cédula
+                    </label>
+                    <div style={styles.searchInputWrapper}>
+                        <FiSearch style={styles.searchIcon} />
+                        <input
+                            type="text"
+                            placeholder="Ej: Juan Pérez o V-12345678"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            style={styles.searchInput}
+                        />
+                    </div>
+                </div>
+
+                <div style={{ flex: "1 1 200px" }}>
+                    <label style={styles.label}>
+                        Filtrar por Estatus
+                    </label>
+                    <select
+                        value={selectedEstatus}
+                        onChange={(e) => setSelectedEstatus(e.target.value)}
+                        style={styles.select}
+                    >
+                        {OPCIONES_ESTATUS.map(op => (
+                            <option key={op} value={op}>{op}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+
+            {/* Fila 2: Filtros de Área / Especialidad / Salario (backend) */}
             <div style={styles.row}>
                 {/* Área de Trabajo */}
                 <div style={{ flex: "1 1 320px" }}>

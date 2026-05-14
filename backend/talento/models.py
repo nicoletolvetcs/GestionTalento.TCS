@@ -5,12 +5,35 @@ from django_countries import countries
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
-def ruta_documentos_candidato(instance, filename):
+import os
+
+def _get_extension(filename):
+    """Extrae la extensión de un archivo de forma segura."""
+    return os.path.splitext(filename)[1].lower() if filename else '.pdf'
+
+def ruta_cv(instance, filename):
     """
-    Genera dinámicamente la ruta: Documentos_Subidos/<cedula>/<nombre_archivo>
+    Genera: candidatos/<cedula>/<cedula>_cv.<ext>
     """
     cedula = instance.cedula if instance.cedula else 'Sin_Cedula'
-    return f'Documentos_Subidos/{cedula}/{filename}'
+    ext = _get_extension(filename)
+    return f'candidatos/{cedula}/{cedula}_cv{ext}'
+
+def ruta_documento_identidad(instance, filename):
+    """
+    Genera: candidatos/<cedula>/<cedula>_doc1.<ext>
+    """
+    cedula = instance.cedula if instance.cedula else 'Sin_Cedula'
+    ext = _get_extension(filename)
+    return f'candidatos/{cedula}/{cedula}_doc1{ext}'
+
+def ruta_referencias(instance, filename):
+    """
+    Genera: candidatos/<cedula>/<cedula>_doc2.<ext>
+    """
+    cedula = instance.cedula if instance.cedula else 'Sin_Cedula'
+    ext = _get_extension(filename)
+    return f'candidatos/{cedula}/{cedula}_doc2{ext}'
 
 
 CHOICES_PAISES = [('', 'Seleccionar País')] + [(name, name) for code, name in list(countries)]
@@ -85,19 +108,19 @@ class Candidato(models.Model):
     direccion = models.CharField(max_length=200, blank=True)
     aspiracion_salarial = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0, message="El salario no puede ser negativo.")])
     documento_identidad = models.FileField(
-        upload_to=ruta_documentos_candidato, 
+        upload_to=ruta_documento_identidad, 
         null=True, blank=True,
-        validators=[FileExtensionValidator(allowed_extensions=['pdf'])]
+        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'jpg', 'jpeg', 'png'])]
     )
     curriculum_vitae = models.FileField(
-        upload_to=ruta_documentos_candidato, 
+        upload_to=ruta_cv, 
         null=True, blank=True,
         validators=[FileExtensionValidator(allowed_extensions=['pdf'])]
     )
     referencias = models.FileField(
-        upload_to=ruta_documentos_candidato, 
+        upload_to=ruta_referencias, 
         null=True, blank=True,
-        validators=[FileExtensionValidator(allowed_extensions=['pdf'])]
+        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'jpg', 'jpeg', 'png'])]
     )
     moneda = models.CharField(
         max_length=3,

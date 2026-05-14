@@ -142,8 +142,10 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # Media files (uploaded documents, CVs, images)
+# Almacenados FUERA del código fuente para seguridad y despliegue profesional.
+# Jerarquía: gestion_talentos/../documentos_sgth/
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = BASE_DIR.parent.parent / 'documentos_sgth'
 
 
 CORS_ALLOWED_ORIGINS = [

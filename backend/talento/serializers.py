@@ -139,6 +139,26 @@ class CandidatoSerializer(serializers.ModelSerializer):
             })
         return data
 
+    # ── Validación de archivos: tamaño máximo 5MB ──
+    MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+
+    def _validate_file_size(self, value, field_label):
+        if value and hasattr(value, 'size') and value.size > self.MAX_FILE_SIZE:
+            size_mb = round(value.size / (1024 * 1024), 1)
+            raise serializers.ValidationError(
+                f"El archivo de {field_label} pesa {size_mb}MB. El máximo permitido es 5MB."
+            )
+        return value
+
+    def validate_curriculum_vitae(self, value):
+        return self._validate_file_size(value, "Currículum Vitae")
+
+    def validate_documento_identidad(self, value):
+        return self._validate_file_size(value, "Documento de Identidad")
+
+    def validate_referencias(self, value):
+        return self._validate_file_size(value, "Referencias")
+
 
     class Meta:
         model = Candidato

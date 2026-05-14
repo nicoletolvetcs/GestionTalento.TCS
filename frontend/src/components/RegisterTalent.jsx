@@ -314,7 +314,7 @@ const RegisterTalent = ({ onBack }) => {
               <div style={{ display: 'flex', gap: '16px', width: '100%' }}>
                 <FormInput
                   label="Identificación *"
-                  placeholder="V-12345678"
+                  placeholder="V12345678"
                   width="50%"
                   value={formData.cedula}
                   onChange={handleInputChange}

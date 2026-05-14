@@ -23,16 +23,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='candidato',
             name='curriculum_vitae',
-            field=models.FileField(blank=True, null=True, upload_to=talento.models.ruta_documentos_candidato, validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['pdf'])]),
+            field=models.FileField(blank=True, null=True, upload_to=talento.models.ruta_cv, validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['pdf'])]),
         ),
         migrations.AddField(
             model_name='candidato',
             name='documento_identidad',
-            field=models.FileField(blank=True, null=True, upload_to=talento.models.ruta_documentos_candidato, validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['pdf'])]),
+            field=models.FileField(blank=True, null=True, upload_to=talento.models.ruta_documento_identidad, validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['pdf', 'jpg', 'jpeg', 'png'])]),
         ),
         migrations.AddField(
             model_name='candidato',
             name='referencias',
-            field=models.FileField(blank=True, null=True, upload_to=talento.models.ruta_documentos_candidato, validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['pdf'])]),
+            field=models.FileField(blank=True, null=True, upload_to=talento.models.ruta_referencias, validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['pdf', 'jpg', 'jpeg', 'png'])]),
         ),
     ]
+

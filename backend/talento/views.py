@@ -98,11 +98,13 @@ class CustomLoginView(TokenObtainPairView):
 class AreaViewSet(viewsets.ModelViewSet):
     queryset = Area.objects.all()
     serializer_class = AreaSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 
 class EspecialidadViewSet(viewsets.ModelViewSet):
     queryset = Especialidad.objects.all()
     serializer_class = EspecialidadSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 
 class ConfiguracionAreas(APIView):
